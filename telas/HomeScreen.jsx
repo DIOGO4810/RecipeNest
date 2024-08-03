@@ -1,49 +1,93 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, Image } from 'react-native';
-import { getDb } from '../baseDeDados/database'; // Certifique-se de que o caminho está correto
+import { checkIngredientsAvailability } from '../baseDeDados/dataUtils'; // Ajuste o caminho conforme necessário
+import { getDb } from '../baseDeDados/database';
+import { useFocusEffect } from '@react-navigation/native';
 
 const HomeScreen = () => {
   const [recipes, setRecipes] = useState([]);
 
-  useEffect(() => {
-    const fetchRecipes = () => {
+  const fetchRecipes = async () => {
+    try {
       const db = getDb();
 
       db.transaction(tx => {
         tx.executeSql(
           'SELECT * FROM recipes WHERE category = ?',
           ['refeicao'],
-          (_, { rows }) => {
-            setRecipes(rows._array);
-            console.log('Receitas recuperadas:', rows._array); // Adicione isto para verificar
+          async (_, { rows }) => {
+            const recipes = rows._array.map(recipe => {
+              const ingredients = JSON.parse(recipe.ingredients.replace(/\\"/g, '"').replace(/^"|"$/g, ''));
+              
+              return {
+                ...recipe,
+                ingredients
+              };
+            });
+
+            console.log('Iniciando verificação de disponibilidade de ingredientes...');
+
+            const validRecipes = await Promise.all(recipes.map(async (recipe) => {
+              const isAvailable = await checkIngredientsAvailability(recipe.id);
+              console.log(`Disponibilidade para a receita ${recipe.name} (ID ${recipe.id}):`, isAvailable);
+              return isAvailable ? recipe : null;
+            }));
+
+            console.log('Receitas após verificação de disponibilidade de ingredientes:', validRecipes);
+
+            // Filtrar receitas válidas
+            const filteredRecipes = validRecipes.filter(recipe => recipe !== null);
+
+            if (filteredRecipes.length === 0) {
+              console.log('Nenhuma receita válida encontrada.');
+            } else {
+              console.log("Tens algo para comer uuhuhuhuh");
+            }
+
+            setRecipes(filteredRecipes);
           },
           (tx, error) => {
-            console.error('Erro ao buscar receitas', error);
+            console.error('Erro ao buscar receitas:', error);
           }
         );
       });
-    };
+    } catch (error) {
+      console.error('Erro ao buscar receitas:', error);
+    }
+  };
 
-    fetchRecipes();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchRecipes();
+    }, [])
+  );
 
   const renderItem = ({ item }) => (
     <View style={styles.recipeItem}>
-      <Image source={item.image} style={styles.recipeImage} />
       <Text style={styles.recipeName}>{item.name}</Text>
       <Text>{item.description}</Text>
       <Text>Tempo de Preparação: {item.preparation_time} minutos</Text>
+      <Text>Ingredientes:</Text>
+      {item.ingredients.map((ingredient, index) => (
+        <Text key={index}>
+          - {ingredient.name} ({ingredient.quantity === "Null" ? '' : `${ingredient.quantity} gramas`} {ingredient.unit === "Null" ? '' : `${ingredient.unit} unidades`})
+        </Text>
+      ))}
     </View>
   );
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Receitas</Text>
-      <FlatList
-        data={recipes}
-        keyExtractor={item => item.id.toString()}
-        renderItem={renderItem}
-      />
+      {recipes.length === 0 ? (
+        <Text>Nenhuma receita disponível.</Text>
+      ) : (
+        <FlatList
+          data={recipes}
+          keyExtractor={item => item.id.toString()}
+          renderItem={renderItem}
+        />
+      )}
     </View>
   );
 };
