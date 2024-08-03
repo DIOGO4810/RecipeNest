@@ -7,8 +7,9 @@ import ingredientImages from '../imageMapping'; // Certifique-se de que este cam
 
 const AvailableIngredientsScreen = () => {
   const [ingredientName, setIngredientName] = useState('');
-  const [quantity, setQuantity] = useState(1); 
-  const [unit, setUnit] = useState(1); 
+  const [quantity, setQuantity] = useState(null); // Quantidade padrão null
+  const [unit, setUnit] = useState(null); // Unidade padrão null
+  const [unitValue, setUnitValue] = useState(0); // Valor numérico para o Slider
   const [ingredients, setIngredients] = useState([]);
   const db = getDb();
 
@@ -17,11 +18,13 @@ const AvailableIngredientsScreen = () => {
   }, []);
 
   const loadIngredients = () => {
+    console.log('Carregando ingredientes...');
     db.transaction(tx => {
       tx.executeSql(
         'SELECT * FROM ingredients',
         [],
         (_, { rows }) => {
+          console.log('Ingredientes carregados:', rows._array);
           const ingredientsArray = rows._array.map(item => ({
             id: item.id.toString(),
             name: item.name,
@@ -32,7 +35,7 @@ const AvailableIngredientsScreen = () => {
           setIngredients(ingredientsArray);
         },
         (tx, error) => {
-          console.error(error);
+          console.error('Erro ao carregar ingredientes:', error);
         }
       );
     });
@@ -41,45 +44,55 @@ const AvailableIngredientsScreen = () => {
   const addIngredient = () => {
     if (ingredientName.trim()) {
       const imageName = ingredientName.toLowerCase().replace(/\s+/g, '-');
+      console.log('Adicionando ingrediente:', {
+        name: ingredientName,
+        quantity,
+        unit,
+        image: imageName
+      });
       db.transaction(tx => {
         tx.executeSql(
           'INSERT INTO ingredients (name, quantity, unit, image) VALUES (?, ?, ?, ?)',
-          [ingredientName, quantity, unit, imageName],
+          [ingredientName, quantity, unit === 'Null' ? null : unit, imageName],
           (_, result) => {
-            const newIngredient = {
-              id: result.insertId.toString(),
-              name: ingredientName,
-              quantity,
-              unit,
-              image: imageName,
-            };
-            setIngredients([...ingredients, newIngredient]);
+            console.log('Ingrediente adicionado com sucesso:', result);
+            loadIngredients(); // Recarregar ingredientes após adição
             setIngredientName('');
-            setQuantity(1); // Reset para o valor inicial
-            setUnit(1);
+            setQuantity(null); // Reset para null
+            setUnit(null); // Reset para null
+            setUnitValue(0); // Reset para 0
           },
           (tx, error) => {
-            console.error(error);
+            console.error('Erro ao adicionar ingrediente:', error);
           }
         );
       });
+    } else {
+      console.log('Nome do ingrediente está vazio.');
     }
+  };
+
+  const handleUnitChange = value => {
+    setUnitValue(value);
+    setUnit(value === 0 ? null : value.toString());
   };
 
   const renderItem = ({ item }) => {
     const imageSource = ingredientImages[item.image] || require('../assets/images/ingredients/default.png');
 
-    return (
-      <View style={styles.cont}>
-        <Image source={imageSource} style={styles.ingredientImage} />
-        <View>
-          <Text>{item.name}               </Text>
-        </View>
-        <View>
-          <Text>{item.quantity} {item.unit}</Text>
-        </View>
+    console.log('Renderizando ingrediente:', item);
 
+    return (
+      <View style={styles.ingredientItem}>
+      <View style={styles.ingredientDetails}>
+        <Text style={styles.title}>{item.name}</Text>
       </View>
+      <View style={styles.ingredientQuantity}>
+        <Text style={styles.biggerText}>
+          {item.quantity !== null ? `${item.quantity} g` : `${item.unit} unidades`}
+        </Text>
+      </View>
+    </View>
     );
   };
 
@@ -92,23 +105,27 @@ const AvailableIngredientsScreen = () => {
         value={ingredientName}
         onChangeText={setIngredientName}
       />
-      <Text style={styles.sliderLabel}>Quantidade: {quantity} gramas</Text>
+      <Text style={styles.sliderLabel}>
+        Quantidade: {quantity !== null ? quantity : 'NULL'} gramas
+      </Text>
       <Slider
         style={styles.slider}
-        minimumValue={100}
+        minimumValue={0}
         maximumValue={1000}
         step={1}
-        value={quantity}
-        onValueChange={value => setQuantity(value)}
+        value={quantity !== null ? quantity : 0}
+        onValueChange={value => setQuantity(value === 0 ? null : value)}
       />
-        <Text style={styles.sliderLabel}>Unidades: {unit} </Text>      
-        <Slider
+      <Text style={styles.sliderLabel}>
+        Unidades: {unit !== null ? unit : 'NULL'}
+      </Text>
+      <Slider
         style={styles.slider}
-        minimumValue={1}
+        minimumValue={0}
         maximumValue={20}
         step={1}
-        value={unit}
-        onValueChange={value => setUnit(value)}
+        value={unitValue}
+        onValueChange={handleUnitChange}
       />
       <Button title="Adicionar" onPress={addIngredient} />
       <FlatList
@@ -127,13 +144,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#fff',
   },
-  cont:{
-    padding:20,
-    flexDirection:'row'
-  },
   title: {
     fontSize: 20,
     margin: 10,
+  },
+  biggerText: {
+    fontSize:20
   },
   input: {
     height: 40,
@@ -154,6 +170,7 @@ const styles = StyleSheet.create({
   ingredientItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginVertical: 10,
     width: '100%',
     paddingHorizontal: 10,
@@ -165,6 +182,10 @@ const styles = StyleSheet.create({
   },
   ingredientDetails: {
     flex: 1,
+  },
+  ingredientQuantity: {
+    flexShrink: 0,
+  
   },
 });
 
