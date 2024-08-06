@@ -85,7 +85,8 @@ export const checkIngredientsAvailability = async (recipeId) => {
 
           const recipeIngredients = JSON.parse(recipe.ingredients.replace(/\\"/g, '"').replace(/^"|"$/g, ''));
 
-          db.transaction(tx2 => {          console.log("ENTROU");
+          db.transaction(tx2 => {          
+            console.log("ENTROU");
 
             tx2.executeSql(
               'SELECT * FROM ingredients',
@@ -113,9 +114,12 @@ export const checkIngredientsAvailability = async (recipeId) => {
                     console.log(`Quantidade necessária: ${recipeQuantity}, Quantidade disponível: ${availableQuantity}`);
                     console.log(`Unidade necessária: ${recipeUnit}, Unidade disponível: ${availableUnit}`);
 
-                    const quantityCheck = recipeQuantity === null || availableQuantity >= recipeQuantity;
-                    const unitCheck = recipeUnit === null || availableUnit >= recipeUnit;
+                    const quantityCheck = recipeQuantity === null || isNaN(recipeQuantity) || Number(availableQuantity) >= Number(recipeQuantity);
+                    const unitCheck = (recipeUnit === null) || (availableUnit !== null && Number(availableUnit) >= Number(recipeUnit));
                     console.log(quantityCheck,unitCheck);
+                    console.log(availableUnit >= recipeUnit);
+                    console.log(availableUnit);
+                    console.log(recipeUnit);
                     return quantityCheck && unitCheck;
                   }
 

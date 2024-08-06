@@ -56,6 +56,7 @@ const HomeScreen = () => {
     }
   };
 
+  //Better useEffect
   useFocusEffect(
     useCallback(() => {
       fetchRecipes();
