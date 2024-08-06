@@ -58,6 +58,8 @@ const BakeryScreen = () => {
     }
   };
 
+    //Better useEffect
+
   useFocusEffect(
     useCallback(() => {
       fetchRecipes();
@@ -72,7 +74,7 @@ const BakeryScreen = () => {
       <Text>Ingredientes:</Text>
       {item.ingredients.map((ingredient, index) => (
         <Text key={index}>
-          - {ingredient.name} ({ingredient.quantity === "Null" ? '' : `${ingredient.quantity}`} {ingredient.unit === "Null" ? '' : `${ingredient.unit}`})
+          - {ingredient.name} ({ingredient.quantity === "Null" ? '' : `${ingredient.quantity} gramas`} {ingredient.unit === "Null" ? '' : `${ingredient.unit} unidades`})
         </Text>
       ))}
     </View>
@@ -98,6 +100,8 @@ const BakeryScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,  
+    justifyContent: 'flex-start',
+    alignItems: 'center',
     backgroundColor: '#fff',
   },
   title: {

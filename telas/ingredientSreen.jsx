@@ -1,21 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, FlatList, Image, StyleSheet } from 'react-native';
-import Slider from '@react-native-community/slider'; // Atualize a importação
+import React, { useState, useCallback } from 'react';
+import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import Slider from '@react-native-community/slider';
+import { useFocusEffect } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/Ionicons';
 
-import { getDb } from '../baseDeDados/database'; // Certifique-se de que este caminho está correto
-import ingredientImages from '../imageMapping'; // Certifique-se de que este caminho está correto
+import { getDb } from '../baseDeDados/database';
+import ingredientImages from '../imageMapping';
 
 const AvailableIngredientsScreen = () => {
   const [ingredientName, setIngredientName] = useState('');
-  const [quantity, setQuantity] = useState(null); // Quantidade padrão null
-  const [unit, setUnit] = useState(null); // Unidade padrão null
-  const [unitValue, setUnitValue] = useState(0); // Valor numérico para o Slider
+  const [quantity, setQuantity] = useState(null);
+  const [unit, setUnit] = useState(null);
+  
   const [ingredients, setIngredients] = useState([]);
   const db = getDb();
 
-  useEffect(() => {
-    loadIngredients();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadIngredients();
+    }, [])
+  );
 
   const loadIngredients = () => {
     console.log('Carregando ingredientes...');
@@ -56,11 +60,11 @@ const AvailableIngredientsScreen = () => {
           [ingredientName, quantity, unit === 'Null' ? null : unit, imageName],
           (_, result) => {
             console.log('Ingrediente adicionado com sucesso:', result);
-            loadIngredients(); // Recarregar ingredientes após adição
+            loadIngredients();
             setIngredientName('');
-            setQuantity(null); // Reset para null
-            setUnit(null); // Reset para null
-            setUnitValue(0); // Reset para 0
+            setQuantity(null);
+            setUnit(null);
+            
           },
           (tx, error) => {
             console.error('Erro ao adicionar ingrediente:', error);
@@ -72,9 +76,60 @@ const AvailableIngredientsScreen = () => {
     }
   };
 
+  const removeIngredient = (id) => {
+    console.log('Removendo ingrediente com id:', id);
+    db.transaction(tx => {
+      tx.executeSql(
+        'DELETE FROM ingredients WHERE id = ?',
+        [id],
+        (_, result) => {
+          console.log('Ingrediente removido com sucesso:', result);
+          loadIngredients();
+        },
+        (tx, error) => {
+          console.error('Erro ao remover ingrediente:', error);
+        }
+      );
+    });
+  };
+
+  const handleSliderChange = (id, value) => {
+    const updatedIngredients = ingredients.map(ingredient =>
+      ingredient.id === id
+        ? {
+            ...ingredient,
+            quantity: ingredient.quantity !== null ? value : ingredient.quantity,
+            unit: ingredient.quantity === null ? value : ingredient.unit,
+          }
+        : ingredient
+    );
+    setIngredients(updatedIngredients);
+    db.transaction(tx => {
+      tx.executeSql(
+        'UPDATE ingredients SET quantity = ?, unit = ? WHERE id = ?',
+        [value, value, id],
+        (_, result) => {
+          console.log('Ingrediente atualizado com sucesso:', result);
+        },
+        (tx, error) => {
+          console.error('Erro ao atualizar ingrediente:', error);
+        }
+      );
+    });
+  };
+
+  
+
+  const handleQuantitieChange = value => {
+
+
+    setQuantity(value === 0 ? null : value);
+
+  };
+
+
   const handleUnitChange = value => {
-    setUnitValue(value);
-    setUnit(value === 0 ? null : value.toString());
+    setUnit(value === 0 ? null : value);
   };
 
   const renderItem = ({ item }) => {
@@ -82,17 +137,30 @@ const AvailableIngredientsScreen = () => {
 
     console.log('Renderizando ingrediente:', item);
 
+    
+
     return (
       <View style={styles.ingredientItem}>
-      <View style={styles.ingredientDetails}>
-        <Text style={styles.title}>{item.name}</Text>
+        <View style={styles.detailsContainer}>
+          <Text style={styles.title}>{item.name}</Text>
+          { <Slider
+          style={styles.slider}
+          minimumValue= {null}
+          maximumValue={quantity === null ? 20 : 1000}
+          step={0.75}  
+          value={quantity === null ? unit : quantity}
+          onValueChange={(value) => handleSliderChange(item.id,value)}
+          
+          /> }
+
+          <Text style={styles.biggerText}>
+            {item.quantity !== null ? `${item.quantity} g` : `${item.unit} unidades`}
+          </Text>
+        </View>
+        <TouchableOpacity onPress={() => removeIngredient(item.id)} style={styles.removeButton}>
+          <Icon name="trash-outline" size={24} color="black" />
+        </TouchableOpacity>
       </View>
-      <View style={styles.ingredientQuantity}>
-        <Text style={styles.biggerText}>
-          {item.quantity !== null ? `${item.quantity} g` : `${item.unit} unidades`}
-        </Text>
-      </View>
-    </View>
     );
   };
 
@@ -114,7 +182,7 @@ const AvailableIngredientsScreen = () => {
         maximumValue={1000}
         step={1}
         value={quantity !== null ? quantity : 0}
-        onValueChange={value => setQuantity(value === 0 ? null : value)}
+        onValueChange={(value) => setQuantity(value === 0 ? null : value)}
       />
       <Text style={styles.sliderLabel}>
         Unidades: {unit !== null ? unit : 'NULL'}
@@ -124,8 +192,8 @@ const AvailableIngredientsScreen = () => {
         minimumValue={0}
         maximumValue={20}
         step={1}
-        value={unitValue}
-        onValueChange={handleUnitChange}
+        value={unit !== null ? unit : 0}
+        onValueChange={(value) => setUnit(value === 0 ? null : value)}
       />
       <Button title="Adicionar" onPress={addIngredient} />
       <FlatList
@@ -149,7 +217,7 @@ const styles = StyleSheet.create({
     margin: 10,
   },
   biggerText: {
-    fontSize:20
+    fontSize: 20
   },
   input: {
     height: 40,
@@ -175,17 +243,15 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: 10,
   },
-  ingredientImage: {
-    width: 55,
-    height: 55,
-    marginRight: 10,
-  },
-  ingredientDetails: {
+  detailsContainer: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent:'space-between'
   },
-  ingredientQuantity: {
-    flexShrink: 0,
-  
+  removeButton: {
+    padding: 10,
+    borderRadius: 5,
   },
 });
 
