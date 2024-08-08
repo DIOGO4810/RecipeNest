@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
-import Slider from '@react-native-community/slider';
+import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -11,7 +10,6 @@ const AvailableIngredientsScreen = () => {
   const [ingredientName, setIngredientName] = useState('');
   const [quantity, setQuantity] = useState(null);
   const [unit, setUnit] = useState(null);
-  
   const [ingredients, setIngredients] = useState([]);
   const db = getDb();
 
@@ -64,7 +62,6 @@ const AvailableIngredientsScreen = () => {
             setIngredientName('');
             setQuantity(null);
             setUnit(null);
-            
           },
           (tx, error) => {
             console.error('Erro ao adicionar ingrediente:', error);
@@ -93,21 +90,17 @@ const AvailableIngredientsScreen = () => {
     });
   };
 
-  const handleSliderChange = (id, value) => {
+  const handleTextInputChange = (id, value, type) => {
     const updatedIngredients = ingredients.map(ingredient =>
       ingredient.id === id
-        ? {
-            ...ingredient,
-            quantity: ingredient.quantity !== null ? value : ingredient.quantity,
-            unit: ingredient.quantity === null ? value : ingredient.unit,
-          }
+        ? { ...ingredient, [type]: value }
         : ingredient
     );
     setIngredients(updatedIngredients);
     db.transaction(tx => {
       tx.executeSql(
-        'UPDATE ingredients SET quantity = ?, unit = ? WHERE id = ?',
-        [value, value, id],
+        `UPDATE ingredients SET ${type} = ? WHERE id = ?`,
+        [value, id],
         (_, result) => {
           console.log('Ingrediente atualizado com sucesso:', result);
         },
@@ -118,43 +111,24 @@ const AvailableIngredientsScreen = () => {
     });
   };
 
-  
-
-  const handleQuantitieChange = value => {
-
-
-    setQuantity(value === 0 ? null : value);
-
-  };
-
-
-  const handleUnitChange = value => {
-    setUnit(value === 0 ? null : value);
-  };
-
   const renderItem = ({ item }) => {
     const imageSource = ingredientImages[item.image] || require('../assets/images/ingredients/default.png');
 
     console.log('Renderizando ingrediente:', item);
 
-    
-
     return (
       <View style={styles.ingredientItem}>
         <View style={styles.detailsContainer}>
           <Text style={styles.title}>{item.name}</Text>
-          { <Slider
-          style={styles.slider}
-          minimumValue= {null}
-          maximumValue={quantity === null ? 20 : 1000}
-          step={0.75}  
-          value={quantity === null ? unit : quantity}
-          onValueChange={(value) => handleSliderChange(item.id,value)}
-          
-          /> }
-
+          <TextInput
+            style={styles.input}
+            placeholder={item.quantity !== null ? "Altere a quantidade" : "Altere as unidades"}
+            value={item.quantity !== null ? item.quantity.toString() : item.unit.toString()}
+            onChangeText={(value) => handleTextInputChange(item.id, value, item.quantity !== null ? 'quantity' : 'unit')}
+            keyboardType="numeric"
+          />
           <Text style={styles.biggerText}>
-            {item.quantity !== null ? `${item.quantity} g` : `${item.unit} unidades`}
+            {item.quantity !== null ? `${item.quantity} g` : item.unit !== null ? `${item.unit} unidades` : ''}
           </Text>
         </View>
         <TouchableOpacity onPress={() => removeIngredient(item.id)} style={styles.removeButton}>
@@ -164,8 +138,16 @@ const AvailableIngredientsScreen = () => {
     );
   };
 
+  // Add an invisible TextInput at the end
+  const renderDecoy = () => (
+    <TextInput
+      style={[styles.input, { opacity: 0 }]} // Set opacity to 0 to make it invisible
+      editable={false} // Make it non-editable
+    />
+  );
+
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <Text style={styles.title}>Adicionar Ingrediente</Text>
       <TextInput
         style={styles.input}
@@ -176,32 +158,31 @@ const AvailableIngredientsScreen = () => {
       <Text style={styles.sliderLabel}>
         Quantidade: {quantity !== null ? quantity : 'NULL'} gramas
       </Text>
-      <Slider
-        style={styles.slider}
-        minimumValue={0}
-        maximumValue={1000}
-        step={1}
-        value={quantity !== null ? quantity : 0}
-        onValueChange={(value) => setQuantity(value === 0 ? null : value)}
+      <TextInput
+        style={styles.input}
+        placeholder="Quantidade do Ingrediente"
+        value={quantity !== null ? quantity.toString() : ''}
+        onChangeText={(value) => setQuantity(value === '' ? null : parseInt(value))}
+        keyboardType="numeric"
       />
       <Text style={styles.sliderLabel}>
         Unidades: {unit !== null ? unit : 'NULL'}
       </Text>
-      <Slider
-        style={styles.slider}
-        minimumValue={0}
-        maximumValue={20}
-        step={1}
-        value={unit !== null ? unit : 0}
-        onValueChange={(value) => setUnit(value === 0 ? null : value)}
+      <TextInput
+        style={styles.input}
+        placeholder="Unidades do Ingrediente"
+        value={unit !== null ? unit.toString() : ''}
+        onChangeText={(value) => setUnit(value === '' ? null : parseInt(value))}
+        keyboardType="numeric"
       />
       <Button title="Adicionar" onPress={addIngredient} />
       <FlatList
         data={ingredients}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
+        ListFooterComponent={renderDecoy} // Add the invisible TextInput as a footer
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -217,7 +198,7 @@ const styles = StyleSheet.create({
     margin: 10,
   },
   biggerText: {
-    fontSize: 20
+    fontSize: 20,
   },
   input: {
     height: 40,
@@ -226,10 +207,6 @@ const styles = StyleSheet.create({
     margin: 10,
     padding: 10,
     width: '80%',
-  },
-  slider: {
-    width: '80%',
-    margin: 10,
   },
   sliderLabel: {
     fontSize: 16,
@@ -245,9 +222,9 @@ const styles = StyleSheet.create({
   },
   detailsContainer: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent:'space-between'
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
   },
   removeButton: {
     padding: 10,

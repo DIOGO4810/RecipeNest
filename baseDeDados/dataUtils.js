@@ -1,5 +1,9 @@
 import { getDb } from './database';
 
+function removerAcentos(str) {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
 // Função para adicionar receitas
 export const addRecipe = (name, description, preparationTime, image, category, ingredients) => {
   const db = getDb();
@@ -96,7 +100,7 @@ export const checkIngredientsAvailability = async (recipeId) => {
                 const availableIngredients = ingredientsRows._array;
                 const hasAllIngredients = recipeIngredients.every(recipeIngredient => {
                   const availableIngredient = availableIngredients.find(
-                    ingredient => ingredient.name.toLowerCase() === recipeIngredient.name.toLowerCase()
+                    ingredient => removerAcentos((ingredient.name.toLowerCase()).trim()) === recipeIngredient.name.toLowerCase()
                   );
 
                   if (availableIngredient) {
@@ -117,9 +121,7 @@ export const checkIngredientsAvailability = async (recipeId) => {
                     const quantityCheck = recipeQuantity === null || isNaN(recipeQuantity) || Number(availableQuantity) >= Number(recipeQuantity);
                     const unitCheck = (recipeUnit === null) || (availableUnit !== null && Number(availableUnit) >= Number(recipeUnit));
                     console.log(quantityCheck,unitCheck);
-                    console.log(availableUnit >= recipeUnit);
-                    console.log(availableUnit);
-                    console.log(recipeUnit);
+                    
                     return quantityCheck && unitCheck;
                   }
 
@@ -220,7 +222,8 @@ export const addInitialRecipes = () => {
       category: 'refeicao',
       ingredients: JSON.stringify([
         {  "name": "eggs", "quantity": "Null", "unit": 3 }, // Requer 3 ovos
-        {  "name": "flour", "quantity": "100", "unit": "Null" } // Requer 100 gramas de farinha
+        {  "name": "flour", "quantity": "100", "unit": "Null" }, // Requer 100 gramas de farinha
+        {"name": "pao", "quantity": "Null", "unit": "5" }
       ]
       )
     },
