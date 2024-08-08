@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, Image } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { checkIngredientsAvailability } from '../baseDeDados/dataUtils'; // Ajuste o caminho conforme necessário
 import { getDb } from '../baseDeDados/database';
 import { useFocusEffect } from '@react-navigation/native';
@@ -28,7 +28,6 @@ const BakeryScreen = () => {
             console.log('Iniciando verificação de disponibilidade de ingredientes...');
 
             const validRecipes = await Promise.all(recipes.map(async (recipe) => {
-              console.log(`Verificando receita ${recipe.name} (ID ${recipe.id})...`);
               const isAvailable = await checkIngredientsAvailability(recipe.id);
               console.log(`Disponibilidade para a receita ${recipe.name} (ID ${recipe.id}):`, isAvailable);
               return isAvailable ? recipe : null;
@@ -46,7 +45,6 @@ const BakeryScreen = () => {
             }
 
             setRecipes(filteredRecipes);
-            console.log('Receitas válidas:', filteredRecipes);
           },
           (tx, error) => {
             console.error('Erro ao buscar receitas:', error);
@@ -58,8 +56,7 @@ const BakeryScreen = () => {
     }
   };
 
-    //Better useEffect
-
+  //Better useEffect
   useFocusEffect(
     useCallback(() => {
       fetchRecipes();
@@ -68,13 +65,14 @@ const BakeryScreen = () => {
 
   const renderItem = ({ item }) => (
     <View style={styles.recipeItem}>
+      <Image source={item.image} style={styles.recipeImage} />
       <Text style={styles.recipeName}>{item.name}</Text>
       <Text>{item.description}</Text>
       <Text>Tempo de Preparação: {item.preparation_time} minutos</Text>
       <Text>Ingredientes:</Text>
       {item.ingredients.map((ingredient, index) => (
         <Text key={index}>
-          - {ingredient.name} ({ingredient.quantity === "Null" ? '' : `${ingredient.quantity} gramas`} {ingredient.unit === "Null" ? '' : `${ingredient.unit} unidades`})
+          - {ingredient.name} ({ingredient.quantity === "Null" ? '' : `${ingredient.quantity} gramas/ml`} {ingredient.unit === "Null" ? '' : `${ingredient.unit} unidades`})
         </Text>
       ))}
     </View>
@@ -82,7 +80,7 @@ const BakeryScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Receitas de Sobremesa</Text>
+      <Text style={styles.title}>Receitas de sobremesa</Text>
       {recipes.length === 0 ? (
         <Text>Nenhuma receita disponível.</Text>
       ) : (
@@ -90,7 +88,7 @@ const BakeryScreen = () => {
           data={recipes}
           keyExtractor={item => item.id.toString()}
           renderItem={renderItem}
-          contentContainerStyle={styles.flatListContainer}
+          contentContainerStyle={styles.flatListContent}
         />
       )}
     </View>
@@ -99,37 +97,51 @@ const BakeryScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,  
+    flex: 1,
     justifyContent: 'flex-start',
     alignItems: 'center',
     backgroundColor: '#fff',
+    padding: 10,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     margin: 20,
-    textAlign: 'center',
   },
-  flatListContainer: {
-    flexGrow: 1,
-    paddingBottom: 20,
+  flatListContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   recipeItem: {
     marginVertical: 10,
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-    marginHorizontal: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    width: 300,
+    backgroundColor: '#ffccd4',
+    alignItems: 'center',
   },
   recipeName: {
     fontSize: 18,
     fontWeight: 'bold',
+    marginVertical: 10,
   },
   recipeImage: {
-    width: '100%',
+    width: 200,
     height: 200,
-    resizeMode: 'cover',
+    borderRadius: 20,
     marginBottom: 10,
+  },
+  button: {
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });
 

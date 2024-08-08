@@ -231,7 +231,7 @@ export const addInitialRecipes = () => {
       name: 'cake',
       description: 'Good Cake.',
       preparationTime: 30,
-      image: require('../assets/images/Recypes/spagheti.jpg'),
+      image: require('../assets/images/Recypes/bolo.jpg'),
       category: 'sobremesa',
       ingredients: JSON.stringify([
         {  "name": "eggs", "quantity": "Null", "unit": 3 }, // Requer 3 ovos

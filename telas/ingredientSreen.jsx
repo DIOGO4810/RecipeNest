@@ -128,7 +128,7 @@ const AvailableIngredientsScreen = () => {
             keyboardType="numeric"
           />
           <Text style={styles.biggerText}>
-            {item.quantity !== null ? `${item.quantity} g` : item.unit !== null ? `${item.unit} unidades` : ''}
+            {item.quantity !== null ? `${item.quantity} g/ml` : item.unit !== null ? `${item.unit} unidades` : ''}
           </Text>
         </View>
         <TouchableOpacity onPress={() => removeIngredient(item.id)} style={styles.removeButton}>
@@ -138,13 +138,7 @@ const AvailableIngredientsScreen = () => {
     );
   };
 
-  // Add an invisible TextInput at the end
-  const renderDecoy = () => (
-    <TextInput
-      style={[styles.input, { opacity: 0 }]} // Set opacity to 0 to make it invisible
-      editable={false} // Make it non-editable
-    />
-  );
+
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -162,8 +156,12 @@ const AvailableIngredientsScreen = () => {
         style={styles.input}
         placeholder="Quantidade do Ingrediente"
         value={quantity !== null ? quantity.toString() : ''}
-        onChangeText={(value) => setQuantity(value === '' ? null : parseInt(value))}
+        onChangeText={(value) => {
+          setQuantity(value === '' ? null : parseInt(value));
+          if (value !== '') setUnit(null);
+        }}
         keyboardType="numeric"
+        editable={unit === null}
       />
       <Text style={styles.sliderLabel}>
         Unidades: {unit !== null ? unit : 'NULL'}
@@ -172,15 +170,20 @@ const AvailableIngredientsScreen = () => {
         style={styles.input}
         placeholder="Unidades do Ingrediente"
         value={unit !== null ? unit.toString() : ''}
-        onChangeText={(value) => setUnit(value === '' ? null : parseInt(value))}
+        onChangeText={(value) => {
+          setUnit(value === '' ? null : parseInt(value));
+          if (value !== '') setQuantity(null);
+        }}
         keyboardType="numeric"
+        editable={quantity === null}
       />
       <Button title="Adicionar" onPress={addIngredient} />
       <FlatList
         data={ingredients}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
-        ListFooterComponent={renderDecoy} // Add the invisible TextInput as a footer
+        scrollEnabled={true}
+        removeClippedSubviews={false} // Faz com que o teclado n feche ao chegar ao final da tela 
       />
     </KeyboardAvoidingView>
   );
