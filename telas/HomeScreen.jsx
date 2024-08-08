@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, Image } from 'react-native';
-import { checkIngredientsAvailability } from '../baseDeDados/dataUtils'; // Ajuste o caminho conforme necessário
+import React, { useState, useCallback } from 'react';
+import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, Modal, Button } from 'react-native';
+import { checkIngredientsAvailability } from '../baseDeDados/dataUtils';
 import { getDb } from '../baseDeDados/database';
 import { useFocusEffect } from '@react-navigation/native';
 
 const HomeScreen = () => {
   const [recipes, setRecipes] = useState([]);
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const fetchRecipes = async () => {
     try {
@@ -25,24 +27,12 @@ const HomeScreen = () => {
               };
             });
 
-            console.log('Iniciando verificação de disponibilidade de ingredientes...');
-
             const validRecipes = await Promise.all(recipes.map(async (recipe) => {
               const isAvailable = await checkIngredientsAvailability(recipe.id);
-              console.log(`Disponibilidade para a receita ${recipe.name} (ID ${recipe.id}):`, isAvailable);
               return isAvailable ? recipe : null;
             }));
 
-            console.log('Receitas após verificação de disponibilidade de ingredientes:', validRecipes);
-
-            // Filtrar receitas válidas
             const filteredRecipes = validRecipes.filter(recipe => recipe !== null);
-
-            if (filteredRecipes.length === 0) {
-              console.log('Nenhuma receita válida encontrada.');
-            } else {
-              console.log("Tens algo para comer uuhuhuhuh");
-            }
 
             setRecipes(filteredRecipes);
           },
@@ -56,7 +46,6 @@ const HomeScreen = () => {
     }
   };
 
-  //Better useEffect
   useFocusEffect(
     useCallback(() => {
       fetchRecipes();
@@ -64,17 +53,17 @@ const HomeScreen = () => {
   );
 
   const renderItem = ({ item }) => (
-    <View style={styles.recipeItem}>
-      <Text style={styles.recipeName}>{item.name}</Text>
-      <Text>{item.description}</Text>
-      <Text>Tempo de Preparação: {item.preparation_time} minutos</Text>
-      <Text>Ingredientes:</Text>
-      {item.ingredients.map((ingredient, index) => (
-        <Text key={index}>
-          - {ingredient.name} ({ingredient.quantity === "Null" ? '' : `${ingredient.quantity} gramas`} {ingredient.unit === "Null" ? '' : `${ingredient.unit} unidades`})
-        </Text>
-      ))}
-    </View>
+    <TouchableOpacity onPress={() => {
+      setSelectedRecipe(item);
+      setModalVisible(true);
+    }}>
+      <View style={styles.recipeItem}>
+        <Image source={item.image} style={styles.recipeImage} />
+        <Text style={styles.recipeName}>{item.name}</Text>
+        <Text>{item.description}</Text>
+        <Text>        </Text>
+      </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -87,7 +76,33 @@ const HomeScreen = () => {
           data={recipes}
           keyExtractor={item => item.id.toString()}
           renderItem={renderItem}
+          contentContainerStyle={styles.flatListContent}
         />
+      )}
+
+      {selectedRecipe && (
+        <Modal
+          visible={modalVisible}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Image source={selectedRecipe.image} style={styles.recipeImage} />
+              <Text style={styles.recipeName}>{selectedRecipe.name}</Text>
+              <Text>{selectedRecipe.description}</Text>
+              <Text>Tempo de Preparação: {selectedRecipe.preparation_time} minutos</Text>
+              <Text>Ingredientes:</Text>
+              {selectedRecipe.ingredients.map((ingredient, index) => (
+                <Text key={index}>
+                  - {ingredient.name} ({ingredient.quantity === "Null" ? '' : `${ingredient.quantity} gramas/ml`} {ingredient.unit === "Null" ? '' : `${ingredient.unit} unidades`})
+                </Text>
+              ))}
+              <Button style={styles.padd} title="Fechar" onPress={() => setModalVisible(false)} />
+            </View>
+          </View>
+        </Modal>
       )}
     </View>
   );
@@ -99,28 +114,55 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'center',
     backgroundColor: '#fff',
+    padding: 10,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     margin: 20,
   },
+  flatListContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   recipeItem: {
     marginVertical: 10,
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-    width: '90%',
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    width: 300,
+    backgroundColor: '#ffe680', //Cor de fundo da receita
+    alignItems: 'center',
   },
   recipeName: {
     fontSize: 18,
     fontWeight: 'bold',
+    marginVertical: 10,
   },
   recipeImage: {
-    width: 100,
-    height: 100,
+    width: 200,
+    height: 200,
+    borderRadius: 20,
     marginBottom: 10,
   },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Dim the background
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    width: 300,
+    alignItems: 'center',
+  },
+  padd: {
+    padding:10,
+    margin: 20,
+  }
 });
 
 export default HomeScreen;
