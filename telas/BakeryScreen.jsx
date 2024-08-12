@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { checkIngredientsAvailability } from '../baseDeDados/dataUtils'; // Ajuste o caminho conforme necessário
+import React, { useState, useCallback } from 'react';
+import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, Modal, Dimensions } from 'react-native';
+import { checkIngredientsAvailability } from '../baseDeDados/dataUtils';
 import { getDb } from '../baseDeDados/database';
 import { useFocusEffect } from '@react-navigation/native';
 
 const BakeryScreen = () => {
   const [recipes, setRecipes] = useState([]);
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const fetchRecipes = async () => {
     try {
@@ -25,24 +27,12 @@ const BakeryScreen = () => {
               };
             });
 
-            console.log('Iniciando verificação de disponibilidade de ingredientes...');
-
             const validRecipes = await Promise.all(recipes.map(async (recipe) => {
               const isAvailable = await checkIngredientsAvailability(recipe.id);
-              console.log(`Disponibilidade para a receita ${recipe.name} (ID ${recipe.id}):`, isAvailable);
               return isAvailable ? recipe : null;
             }));
 
-            console.log('Receitas após verificação de disponibilidade de ingredientes:', validRecipes);
-
-            // Filtrar receitas válidas
             const filteredRecipes = validRecipes.filter(recipe => recipe !== null);
-
-            if (filteredRecipes.length === 0) {
-              console.log('Nenhuma receita válida encontrada.');
-            } else {
-              console.log("Tens algo para comer uuhuhuhuh");
-            }
 
             setRecipes(filteredRecipes);
           },
@@ -56,31 +46,34 @@ const BakeryScreen = () => {
     }
   };
 
-  //Better useEffect
   useFocusEffect(
     useCallback(() => {
       fetchRecipes();
     }, [])
   );
 
+  const openModal = (recipe) => {
+    setSelectedRecipe(recipe);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+  };
+
   const renderItem = ({ item }) => (
-    <View style={styles.recipeItem}>
-      <Image source={item.image} style={styles.recipeImage} />
-      <Text style={styles.recipeName}>{item.name}</Text>
-      <Text>{item.description}</Text>
-      <Text>Tempo de Preparação: {item.preparation_time} minutos</Text>
-      <Text>Ingredientes:</Text>
-      {item.ingredients.map((ingredient, index) => (
-        <Text key={index}>
-          - {ingredient.name} ({ingredient.quantity === "Null" ? '' : `${ingredient.quantity} gramas/ml`} {ingredient.unit === "Null" ? '' : `${ingredient.unit} unidades`})
-        </Text>
-      ))}
-    </View>
+    <TouchableOpacity onPress={() => openModal(item)}>
+      <View style={styles.recipeItem}>
+        <Image source={item.image} style={styles.recipeImage} />
+        <Text style={styles.recipeName}>{item.name}{'\n'}</Text>
+        <Text style={styles.biggerStext}>Tempo de preparação: {item.preparation_time} minutos</Text>
+      </View>
+    </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Receitas de sobremesa</Text>
+      <Text style={styles.title}>Receitas</Text>
       {recipes.length === 0 ? (
         <Text>Nenhuma receita disponível.</Text>
       ) : (
@@ -90,6 +83,40 @@ const BakeryScreen = () => {
           renderItem={renderItem}
           contentContainerStyle={styles.flatListContent}
         />
+      )}
+
+      {selectedRecipe && (
+        <Modal
+          visible={modalVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={closeModal}
+        >
+          {/* Fundo com opacidade fixa */}
+          <TouchableOpacity style={styles.modalBackground} onPress={closeModal}>
+            <View style={styles.modalBackground} />
+          </TouchableOpacity>
+          
+          
+          <View style={styles.modalContent}>
+            <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
+              <Text style={styles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
+            <Image source={selectedRecipe.image} style={styles.modalRecipeImage} />
+
+            <Text style={styles.modalRecipeName}>{selectedRecipe.name}</Text>
+
+
+            <Text style={styles.Mtitle} >Tempo de Preparação: {selectedRecipe.preparation_time} minutos {'\n'}</Text>
+            <Text style={styles.biggerLtext} >{selectedRecipe.description}</Text>
+            <Text style={styles.Mtitle}>Ingredientes:</Text>
+            {selectedRecipe.ingredients.map((ingredient, index) => (
+              <Text key={index} style={styles.biggerStext}>
+                - {ingredient.name} ({ingredient.quantity === "Null" ? '' : `${ingredient.quantity} gramas`} {ingredient.unit === "Null" ? '' : `${ingredient.unit} unidades`})
+              </Text>
+            ))}
+          </View>
+        </Modal>
       )}
     </View>
   );
@@ -107,6 +134,16 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     margin: 20,
+  },Stitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    margin: 20,
+  },Mtitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    alignSelf: 'flex-start',
+    marginTop:10,
+    marginLeft: 6,
   },
   flatListContent: {
     justifyContent: 'center',
@@ -119,7 +156,7 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 10,
     width: 300,
-    backgroundColor: '#ffccd4',
+    backgroundColor: '#ffccd4', // Cor de fundo da receita
     alignItems: 'center',
   },
   recipeName: {
@@ -133,16 +170,62 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginBottom: 10,
   },
-  button: {
-    backgroundColor: '#4CAF50',
+  modalBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 1,
+  },
+  modalContent: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    backgroundColor: '#ffe6e9', // Cor de fundo do model da receita que normalmente um bocado mais claro que o da receita em si
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+    zIndex: 2,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
     padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
+    zIndex: 3, // Certifica-se de que o botão "X" esteja sobreposto ao conteúdo
   },
-  buttonText: {
-    color: '#fff',
+  closeButtonText: {
+    color: '#000', // Cor preta para o texto
     fontWeight: 'bold',
+    fontSize: 20, // Tamanho de fonte ajustado para uma aparência de "cruz"
   },
+  modalRecipeImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 20,
+    marginBottom: 10,
+  },
+  modalRecipeName: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginVertical: 10,
+  },
+  biggerLtext: {
+    fontSize:18 
+   },
+
+   biggerMtext:{
+    fontSize:18,
+    alignSelf: 'flex-start',  // Alinha o texto à esquerda
+    marginTop: 10,
+   },
+   biggerStext:{
+    fontSize:16
+   }
+
 });
 
 export default BakeryScreen;
