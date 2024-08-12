@@ -216,7 +216,7 @@ export const addInitialRecipes = () => {
   const recipes = [
     {
       name: 'egg',
-      description: 'Egg dish.',
+      description: 'Modo de preparo:\n\n1. Quebre os 3 ovos em uma tigela.\n2. Adicione a farinha aos ovos e misture bem.\n3. Adicione o pão picado e misture até incorporar todos os ingredientes.\n4. Cozinhe em uma frigideira por cerca de 10 minutos ou até que os ovos estejam totalmente cozidos.\n',
       preparationTime: 30,
       image: require('../assets/images/Recypes/spagheti.jpg'),
       category: 'refeicao',
@@ -229,7 +229,7 @@ export const addInitialRecipes = () => {
     },
     {
       name: 'cake',
-      description: 'Good Cake.',
+      description: 'Good Cake. \n\nModo de preparo:\n1. Bata os 3 ovos em uma tigela.\n2. Adicione a farinha e misture bem até obter uma massa homogênea.\n3. Adicione o leite à mistura e continue mexendo até incorporar bem.\n4. Despeje a massa em uma forma e asse em forno pré-aquecido a 180°C por cerca de 25 minutos ou até dourar.',
       preparationTime: 30,
       image: require('../assets/images/Recypes/bolo.jpg'),
       category: 'sobremesa',

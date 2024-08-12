@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, Modal, Button } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, Modal, Dimensions } from 'react-native';
 import { checkIngredientsAvailability } from '../baseDeDados/dataUtils';
 import { getDb } from '../baseDeDados/database';
 import { useFocusEffect } from '@react-navigation/native';
@@ -52,16 +52,21 @@ const HomeScreen = () => {
     }, [])
   );
 
+  const openModal = (recipe) => {
+    setSelectedRecipe(recipe);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+  };
+
   const renderItem = ({ item }) => (
-    <TouchableOpacity onPress={() => {
-      setSelectedRecipe(item);
-      setModalVisible(true);
-    }}>
+    <TouchableOpacity onPress={() => openModal(item)}>
       <View style={styles.recipeItem}>
         <Image source={item.image} style={styles.recipeImage} />
-        <Text style={styles.recipeName}>{item.name}</Text>
-        <Text>{item.description}</Text>
-        <Text>        </Text>
+        <Text style={styles.recipeName}>{item.name}{'\n'}</Text>
+        <Text style={styles.biggerStext}>Tempo de preparação: {item.preparation_time} minutos</Text>
       </View>
     </TouchableOpacity>
   );
@@ -83,24 +88,33 @@ const HomeScreen = () => {
       {selectedRecipe && (
         <Modal
           visible={modalVisible}
-          animationType="slide"
           transparent={true}
-          onRequestClose={() => setModalVisible(false)}
+          animationType="slide"
+          onRequestClose={closeModal}
         >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Image source={selectedRecipe.image} style={styles.recipeImage} />
-              <Text style={styles.recipeName}>{selectedRecipe.name}</Text>
-              <Text>{selectedRecipe.description}</Text>
-              <Text>Tempo de Preparação: {selectedRecipe.preparation_time} minutos</Text>
-              <Text>Ingredientes:</Text>
-              {selectedRecipe.ingredients.map((ingredient, index) => (
-                <Text key={index}>
-                  - {ingredient.name} ({ingredient.quantity === "Null" ? '' : `${ingredient.quantity} gramas/ml`} {ingredient.unit === "Null" ? '' : `${ingredient.unit} unidades`})
-                </Text>
-              ))}
-              <Button style={styles.padd} title="Fechar" onPress={() => setModalVisible(false)} />
-            </View>
+          {/* Fundo com opacidade fixa */}
+          <TouchableOpacity style={styles.modalBackground} onPress={closeModal}>
+            <View style={styles.modalBackground} />
+          </TouchableOpacity>
+          
+          
+          <View style={styles.modalContent}>
+            <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
+              <Text style={styles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
+            <Image source={selectedRecipe.image} style={styles.modalRecipeImage} />
+
+            <Text style={styles.modalRecipeName}>{selectedRecipe.name}</Text>
+
+
+            <Text style={styles.Mtitle} >Tempo de Preparação: {selectedRecipe.preparation_time} minutos {'\n'}</Text>
+            <Text style={styles.biggerLtext} >{selectedRecipe.description}</Text>
+            <Text style={styles.Mtitle}>Ingredientes:</Text>
+            {selectedRecipe.ingredients.map((ingredient, index) => (
+              <Text key={index} style={styles.biggerStext}>
+                - {ingredient.name} ({ingredient.quantity === "Null" ? '' : `${ingredient.quantity} gramas`} {ingredient.unit === "Null" ? '' : `${ingredient.unit} unidades`})
+              </Text>
+            ))}
           </View>
         </Modal>
       )}
@@ -120,6 +134,16 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     margin: 20,
+  },Stitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    margin: 20,
+  },Mtitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    alignSelf: 'flex-start',
+    marginTop:10,
+    marginLeft: 6,
   },
   flatListContent: {
     justifyContent: 'center',
@@ -132,7 +156,7 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 10,
     width: 300,
-    backgroundColor: '#ffe680', //Cor de fundo da receita
+    backgroundColor: '#ffeb99', // Cor de fundo da receita
     alignItems: 'center',
   },
   recipeName: {
@@ -146,23 +170,62 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginBottom: 10,
   },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Dim the background
+  modalBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 1,
   },
   modalContent: {
-    backgroundColor: '#fff',
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    backgroundColor: '#fff8dc', // Cor de fundo do model da receita que normalmente um bocado mais claro que o da receita em si
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     padding: 20,
-    borderRadius: 10,
-    width: 300,
     alignItems: 'center',
+    zIndex: 2,
   },
-  padd: {
-    padding:10,
-    margin: 20,
-  }
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    padding: 10,
+    zIndex: 3, // Certifica-se de que o botão "X" esteja sobreposto ao conteúdo
+  },
+  closeButtonText: {
+    color: '#000', // Cor preta para o texto
+    fontWeight: 'bold',
+    fontSize: 20, // Tamanho de fonte ajustado para uma aparência de "cruz"
+  },
+  modalRecipeImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 20,
+    marginBottom: 10,
+  },
+  modalRecipeName: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginVertical: 10,
+  },
+  biggerLtext: {
+    fontSize:18 
+   },
+
+   biggerMtext:{
+    fontSize:18,
+    alignSelf: 'flex-start',  // Alinha o texto à esquerda
+    marginTop: 10,
+   },
+   biggerStext:{
+    fontSize:16
+   }
+
 });
 
 export default HomeScreen;
