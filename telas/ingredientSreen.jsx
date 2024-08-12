@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity, KeyboardAvoidingView,Pressable, Platform } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -119,7 +119,12 @@ const AvailableIngredientsScreen = () => {
     return (
       <View style={styles.ingredientItem}>
         <View style={styles.detailsContainer}>
+          <View style={{flexDirection:'row', alignSelf:'center',marginBottom:10}}>
           <Text style={styles.title}>{item.name}</Text>
+          <TouchableOpacity onPress={() => removeIngredient(item.id)} style={styles.removeButton}>
+          <Icon name="trash-outline" size={24} color="#db8a8a" />
+          </TouchableOpacity>
+          </View>
           <TextInput
             style={styles.input}
             placeholder={item.quantity !== null ? "Altere a quantidade" : "Altere as unidades"}
@@ -127,66 +132,80 @@ const AvailableIngredientsScreen = () => {
             onChangeText={(value) => handleTextInputChange(item.id, value, item.quantity !== null ? 'quantity' : 'unit')}
             keyboardType="numeric"
           />
-          <Text style={styles.biggerText}>
+         
+          <Text style={[styles.biggerText,{alignSelf:'center'}]}>
             {item.quantity !== null ? `${item.quantity} g/ml` : item.unit !== null ? `${item.unit} unidades` : ''}
-          </Text>
+          </Text> 
+           
+       
         </View>
-        <TouchableOpacity onPress={() => removeIngredient(item.id)} style={styles.removeButton}>
-          <Icon name="trash-outline" size={24} color="black" />
-        </TouchableOpacity>
+     
       </View>
     );
   };
 
-
-
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <Text style={styles.title}>Adicionar Ingrediente</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Nome do Ingrediente"
-        value={ingredientName}
-        onChangeText={setIngredientName}
-      />
-      <Text style={styles.sliderLabel}>
-        Quantidade: {quantity !== null ? quantity : 'NULL'} gramas
-      </Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Quantidade do Ingrediente"
-        value={quantity !== null ? quantity.toString() : ''}
-        onChangeText={(value) => {
-          setQuantity(value === '' ? null : parseInt(value));
-          if (value !== '') setUnit(null);
-        }}
-        keyboardType="numeric"
-        editable={unit === null}
-      />
-      <Text style={styles.sliderLabel}>
-        Unidades: {unit !== null ? unit : 'NULL'}
-      </Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Unidades do Ingrediente"
-        value={unit !== null ? unit.toString() : ''}
-        onChangeText={(value) => {
-          setUnit(value === '' ? null : parseInt(value));
-          if (value !== '') setQuantity(null);
-        }}
-        keyboardType="numeric"
-        editable={quantity === null}
-      />
-      <Button title="Adicionar" onPress={addIngredient} />
       <FlatList
+       key={'two-columns'}
+        ListHeaderComponent={
+          <View style={{ alignItems: 'center', paddingVertical: 10 }}>
+            <Text style={[styles.title, { maxWidth: 300, textAlign: 'center' }]}>Adicionar Ingrediente</Text>
+            <TextInput
+              style={[styles.input, { width: 250 }]}  // Fixed width for the input
+              placeholder="Nome do Ingrediente"
+              value={ingredientName}
+              onChangeText={setIngredientName}
+            />
+            <Text style={[styles.sliderLabel, { maxWidth: 250 }]}>
+              Quantidade: {quantity !== null ? quantity : 'NULL'} gramas
+            </Text>
+            <TextInput
+              style={[styles.input, { width: 250 }]}  // Fixed width for the input
+              placeholder="Quantidade do Ingrediente"
+              value={quantity !== null ? quantity.toString() : ''}
+              onChangeText={(value) => {
+                setQuantity(value === '' ? null : parseInt(value));
+                if (value !== '') setUnit(null);
+              }}
+              keyboardType="numeric"
+              editable={unit === null}
+            />
+            <Text style={[styles.sliderLabel, { maxWidth: 250 }]}>
+              Unidades: {unit !== null ? unit : 'NULL'}
+            </Text>
+            <TextInput
+              style={[styles.input, { width: 250 }]}  // Fixed width for the input
+              placeholder="Unidades do Ingrediente"
+              value={unit !== null ? unit.toString() : ''}
+              onChangeText={(value) => {
+                setUnit(value === '' ? null : parseInt(value));
+                if (value !== '') setQuantity(null);
+              }}
+              keyboardType="numeric"
+              editable={quantity === null}
+            />
+             <Pressable style={styles.button} onPress={addIngredient}>
+             <Text style={styles.text}>{"Adicionar"}</Text>
+             </Pressable>
+             <View style={{width:'100%',height:2,backgroundColor:'rgba(0,0,0,0.4)',marginVertical:20}}></View>
+             <Text style={[styles.title]}>O meu frigorífico</Text>
+          </View >
+        }
+        
         data={ingredients}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         scrollEnabled={true}
-        removeClippedSubviews={false} // Faz com que o teclado n feche ao chegar ao final da tela 
+        numColumns={2} // Sets two items per row
+        columnWrapperStyle={{ justifyContent: 'space-between' }}
+        removeClippedSubviews={false}
+       
       />
     </KeyboardAvoidingView>
   );
+  
+  
 };
 
 const styles = StyleSheet.create({
@@ -199,6 +218,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     margin: 10,
+    fontWeight:'bold'
   },
   biggerText: {
     fontSize: 20,
@@ -207,9 +227,12 @@ const styles = StyleSheet.create({
     height: 40,
     borderColor: 'gray',
     borderWidth: 1,
-    margin: 10,
+    backgroundColor: '#e6fff7',
+    marginBottom:20,
     padding: 10,
     width: '80%',
+    alignSelf:'center',
+    borderRadius:10
   },
   sliderLabel: {
     fontSize: 16,
@@ -220,8 +243,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginVertical: 10,
-    width: '100%',
     paddingHorizontal: 10,
+    borderRadius: 10,
+    backgroundColor: '#ccffee',
+    width: '48%', // Adjust width to fit two items on the same line
+    padding: 10,
   },
   detailsContainer: {
     flex: 1,
@@ -231,8 +257,19 @@ const styles = StyleSheet.create({
   },
   removeButton: {
     padding: 10,
+    marginBottom:5,
     borderRadius: 5,
+    marginLeft:30,
   },
+  button:{
+    backgroundColor: '#99ffdd',
+    borderRadius: 10,
+  },
+  text:{
+    fontSize:18,
+    padding:10,
+    color: 'black',
+  }
 });
 
 export default AvailableIngredientsScreen;
