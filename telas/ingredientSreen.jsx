@@ -158,7 +158,7 @@ const AvailableIngredientsScreen = () => {
               onChangeText={setIngredientName}
             />
             <Text style={[styles.sliderLabel, { maxWidth: 250 }]}>
-              Quantidade: {quantity !== null ? quantity : 'NULL'} gramas
+              Quantidade: {quantity !== null ? quantity : 'NULL'} gramas/ml
             </Text>
             <TextInput
               style={[styles.input, { width: 250 }]}  // Fixed width for the input

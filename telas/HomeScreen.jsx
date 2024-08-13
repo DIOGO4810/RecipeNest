@@ -1,13 +1,17 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, Modal, Dimensions } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, Modal } from 'react-native';
 import { checkIngredientsAvailability } from '../baseDeDados/dataUtils';
 import { getDb } from '../baseDeDados/database';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { Feather } from '@expo/vector-icons';
 
 const HomeScreen = () => {
   const [recipes, setRecipes] = useState([]);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [isTwoColumn, setIsTwoColumn] = useState(false); // Estado para controlar o número de colunas
+
+  const navigation = useNavigation();  // Usado para navegação
 
   const fetchRecipes = async () => {
     try {
@@ -61,23 +65,55 @@ const HomeScreen = () => {
     setModalVisible(false);
   };
 
+
+  // Calcula a largura dos itens com base no número de colunas
+  const itemWidth = isTwoColumn ? 160: 300;
+  // Calcula a altura dos itens
+  const itemHeight = isTwoColumn ? 250 : 300; // Exemplo de altura com base no número de colunas
+
+  const imageWidth = isTwoColumn ? 100 : 200;
+
+  const imageHeight = isTwoColumn ? 100 : 200;
+
   const renderItem = ({ item }) => (
     <TouchableOpacity onPress={() => openModal(item)}>
-      <View style={styles.recipeItem}>
-        <Image source={item.image} style={styles.recipeImage} />
+      <View style={[styles.recipeItem, { width: itemWidth }]}>
+        <Image source={item.image} style={[styles.recipeImage, { width: imageWidth, height: imageHeight }]} />
         <Text style={styles.recipeName}>{item.name}{'\n'}</Text>
         <Text style={styles.biggerStext}>Tempo de preparação: {item.preparation_time} minutos</Text>
       </View>
     </TouchableOpacity>
   );
 
+    // Render do cabeçalho
+    const renderHeader = () => (
+      <View style={styles.subHeader}>
+      <Text style={styles.title}>Receitas</Text>
+      <TouchableOpacity
+        style={styles.columns}
+        onPress={() => setIsTwoColumn(prev => !prev)}
+        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }} // Adiciona área clicável extra 
+      >
+        {isTwoColumn ? 
+          <Feather name="square" size={24} color="black" /> :
+          <Feather name="grid" size={24} color="black" />
+        }
+      </TouchableOpacity>
+    </View>
+    );
+  
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Receitas</Text>
+    
+     
       {recipes.length === 0 ? (
         <Text>Nenhuma receita disponível.</Text>
       ) : (
         <FlatList
+          ListHeaderComponent={renderHeader}
+          key={isTwoColumn ? 'two' : 'one'}  // Alterar a key para forçar a nova renderização
+          numColumns={isTwoColumn ? 2 : 1}
           data={recipes}
           keyExtractor={item => item.id.toString()}
           renderItem={renderItem}
@@ -97,7 +133,6 @@ const HomeScreen = () => {
             <View style={styles.modalBackground} />
           </TouchableOpacity>
           
-          
           <View style={styles.modalContent}>
             <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
               <Text style={styles.closeButtonText}>✕</Text>
@@ -106,9 +141,8 @@ const HomeScreen = () => {
 
             <Text style={styles.modalRecipeName}>{selectedRecipe.name}</Text>
 
-
-            <Text style={styles.Mtitle} >Tempo de Preparação: {selectedRecipe.preparation_time} minutos {'\n'}</Text>
-            <Text style={styles.biggerLtext} >{selectedRecipe.description}</Text>
+            <Text style={styles.Mtitle}>Tempo de Preparação: {selectedRecipe.preparation_time} minutos {'\n'}</Text>
+            <Text style={styles.biggerLtext}>{selectedRecipe.description}</Text>
             <Text style={styles.Mtitle}>Ingredientes:</Text>
             {selectedRecipe.ingredients.map((ingredient, index) => (
               <Text key={index} style={styles.biggerStext}>
@@ -133,29 +167,31 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    margin: 20,
-  },Stitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    margin: 20,
-  },Mtitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    alignSelf: 'flex-start',
-    marginTop:10,
-    marginLeft: 6,
+    marginLeft:5
   },
+  subHeader:{
+    flexDirection:'row',
+    width: '100%', // Garante que o container ocupe toda a largura disponível
+    paddingHorizontal: 10, // Adiciona algum preenchimento horizontal para que o conteúdo não fique colado às bordas
+    marginBottom:10
+
+  },
+  columns:{
+    alignSelf:'flex-end',
+    
+    marginLeft:180,
+  },
+
   flatListContent: {
     justifyContent: 'center',
     alignItems: 'center',
   },
   recipeItem: {
-    marginVertical: 10,
-    padding: 20,
+    margin:10,
+    padding: 10,
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 10,
-    width: 300,
     backgroundColor: '#ffeb99', // Cor de fundo da receita
     alignItems: 'center',
   },
@@ -165,10 +201,8 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   recipeImage: {
-    width: 200,
-    height: 200,
     borderRadius: 20,
-    marginBottom: 10,
+    marginVertical: 10,
   },
   modalBackground: {
     position: 'absolute',
@@ -176,14 +210,14 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
     zIndex: 1,
   },
   modalContent: {
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    backgroundColor: '#fff8dc', // Cor de fundo do model da receita que normalmente um bocado mais claro que o da receita em si
+    backgroundColor: '#fff8dc', // Cor de fundo do modal da receita
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
@@ -214,18 +248,18 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   biggerLtext: {
-    fontSize:18 
-   },
-
-   biggerMtext:{
-    fontSize:18,
-    alignSelf: 'flex-start',  // Alinha o texto à esquerda
+    fontSize: 18,
+  },
+  biggerStext: {
+    fontSize: 16,
+  },
+  Mtitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    alignSelf: 'flex-start',
     marginTop: 10,
-   },
-   biggerStext:{
-    fontSize:16
-   }
-
+    marginLeft: 6,
+  },
 });
 
 export default HomeScreen;
