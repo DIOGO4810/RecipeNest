@@ -6,6 +6,7 @@ export const initializeDatabase = () => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql('DROP TABLE IF EXISTS recipes');
+      
 
       // Cria a tabela de ingredientes
       tx.executeSql(
@@ -35,7 +36,13 @@ export const initializeDatabase = () => {
           preparation_time INTEGER,
           image TEXT,
           category TEXT,
-          ingredients TEXT
+          ingredients TEXT,
+          calories INTEGER,
+          protein INTEGER,
+          carbs INTEGER,
+          fats INTEGER,
+          isVegan INTEGER
+          
         );`,
         [],
         () => {

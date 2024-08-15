@@ -12,7 +12,7 @@ export default function App() {
       try {
         console.log("A inicializar a base de dados\n\n\n");
         await initializeDatabase(); // Aguarda a inicialização do banco de dados
-        //clearRecipesTable();
+        clearRecipesTable();
         //clearIngredientTable();     // Util para quando se quer mexer na base de dados
         await addInitialRecipes();  // Adiciona receitas após a inicialização
         setIsDatabaseReady(true);   // Atualiza o estado para indicar que a configuração está concluída

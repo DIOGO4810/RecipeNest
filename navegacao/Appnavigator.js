@@ -2,42 +2,89 @@ import React from 'react';
 import { Text,TouchableOpacity } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+
 import HomeScreen from '../telas/HomeScreen';
 import BakeryScreen from '../telas/BakeryScreen';
 import ingredientScreen from '../telas/ingredientSreen';
 import SettingsScreen from '../telas/SettingsScreen';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import EveryRecipe from '../telas/EveryRecipe';
 
-const Tab = createBottomTabNavigator();
+import { Ionicons, MaterialCommunityIcons,Feather } from '@expo/vector-icons';
+
+
+const Drawer = createDrawerNavigator();
 const HomeStack = createStackNavigator();
+const Tab = createBottomTabNavigator();
 
 function HomeStackNavigator() {
     return (
         <HomeStack.Navigator>
-            <HomeStack.Screen 
-                name="Refeições" 
-                component={HomeScreen} 
-                options={({ navigation }) => ({
-                    headerRight: () => (
-                        <TouchableOpacity 
-                        onPress={() => navigation.navigate('Settings')}
-                        style={{ marginRight: 15,}}
-                        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }} // Adiciona área clicável extra 
-                        >
-                         <Ionicons name="settings-outline" size={24} color="black" />
-                        </TouchableOpacity>
-                    ),
-                    // Opcionalmente, você pode ajustar outras propriedades do cabeçalho padrão
-                })}
-            />
-            <HomeStack.Screen 
-                name="Settings" 
-                component={SettingsScreen} 
-                options={{ title: 'Configurações' }} 
-            />
+            <HomeStack.Screen name="HomeTela" component={HomeScreen} options={{ headerShown: false }} />
+            <HomeStack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Configurações' }} />
         </HomeStack.Navigator>
     );
 }
+
+function DrawerNavigator() {
+    return (
+      <Drawer.Navigator
+        screenOptions={({ navigation }) => ({
+
+        drawerStyle: {
+                width: 220,
+                    }, 
+              
+              
+          headerStyle: {
+            backgroundColor: '#fff',
+          },
+
+
+          headerTitleAlign: 'left', // Alinha o título à esquerda
+
+          headerTitle: () => (
+            <Text style={{ marginLeft: 10, fontSize: 20, fontWeight: '500' }}>
+              Home
+            </Text>
+          ),
+
+
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => navigation.openDrawer()} // Abre o menu lateral
+              style={{ marginRight: 15 }}
+              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }} // Adiciona área clicável extra 
+
+            >
+            <Feather name="menu" size={24} color="black" />
+            </TouchableOpacity>
+          ),
+
+          headerLeft: () => null, // Remove o botão padrão do lado esquerdo
+
+          drawerPosition:"right" // Define a posição do drawer para a direita
+
+        })}
+      >
+        <Drawer.Screen
+          name="HomeStack"
+          component={HomeStackNavigator}
+          options={{ drawerLabel: 'Início' }}
+        />
+        <Drawer.Screen
+          name="Settings"
+          component={SettingsScreen}
+          options={{ drawerLabel: 'Configurações' }}
+        />
+        <Drawer.Screen
+          name="Todas_Receiats"
+          component={EveryRecipe}
+          options={{ drawerLabel: 'Todas as Receitas' }}
+        />
+      </Drawer.Navigator>
+    );
+  }
 
 function BottomTabNavigator() {
     return (
@@ -83,11 +130,10 @@ function BottomTabNavigator() {
                 tabBarInactiveTintColor: 'gray',
             })}
         >
-            <Tab.Screen name="Refeições" component={HomeStackNavigator} options={{headerShown:false}}/>
+            <Tab.Screen name="Refeições" component={DrawerNavigator} options={{ headerShown: false }} />
             <Tab.Screen name="Ingredientes" component={ingredientScreen} />
             <Tab.Screen name="Sobremesas" component={BakeryScreen} />
         </Tab.Navigator>
     );
 }
-
 export default BottomTabNavigator;
