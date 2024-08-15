@@ -19,8 +19,8 @@ const HomeScreen = () => {
 
       db.transaction(tx => {
         tx.executeSql(
-          'SELECT * FROM recipes WHERE category = ?',
-          ['refeicao'],
+          'SELECT * FROM recipes WHERE category = ? AND isVegan = ?',
+            ['refeicao', 1], // Aqui, 1 representa true, ou seja, receitas veganas
           async (_, { rows }) => {
             const recipes = rows._array.map(recipe => {
               const ingredients = JSON.parse(recipe.ingredients.replace(/\\"/g, '"').replace(/^"|"$/g, ''));
@@ -81,6 +81,7 @@ const HomeScreen = () => {
         <Image source={item.image} style={[styles.recipeImage, { width: imageWidth, height: imageHeight }]} />
         <Text style={styles.recipeName}>{item.name}{'\n'}</Text>
         <Text style={styles.biggerStext}>Tempo de preparação: {item.preparation_time} minutos</Text>
+        <Text style={styles.biggerStext}>Calorias: {item.calories} kcal</Text>
       </View>
     </TouchableOpacity>
   );
@@ -121,37 +122,50 @@ const HomeScreen = () => {
         />
       )}
 
-      {selectedRecipe && (
-        <Modal
-          visible={modalVisible}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={closeModal}
-        >
-          {/* Fundo com opacidade fixa */}
-          <TouchableOpacity style={styles.modalBackground} onPress={closeModal}>
-            <View style={styles.modalBackground} />
-          </TouchableOpacity>
-          
-          <View style={styles.modalContent}>
-            <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
-              <Text style={styles.closeButtonText}>✕</Text>
-            </TouchableOpacity>
-            <Image source={selectedRecipe.image} style={styles.modalRecipeImage} />
+{selectedRecipe && (
+  <Modal
+    visible={modalVisible}
+    transparent={true}
+    animationType="slide"
+    onRequestClose={closeModal}
+  >
+    {/* Fundo com opacidade fixa */}
+    <TouchableOpacity style={styles.modalBackground} onPress={closeModal}>
+      <View style={styles.modalBackground} />
+    </TouchableOpacity>
+    
+    <View style={styles.modalContent}>
+      <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
+        <Text style={styles.closeButtonText}>✕</Text>
+      </TouchableOpacity>
+      <Image source={selectedRecipe.image} style={styles.modalRecipeImage} />
 
-            <Text style={styles.modalRecipeName}>{selectedRecipe.name}</Text>
+      <Text style={styles.modalRecipeName}>{selectedRecipe.name}</Text>
 
-            <Text style={styles.Mtitle}>Tempo de Preparação: {selectedRecipe.preparation_time} minutos {'\n'}</Text>
-            <Text style={styles.biggerLtext}>{selectedRecipe.description}</Text>
-            <Text style={styles.Mtitle}>Ingredientes:</Text>
-            {selectedRecipe.ingredients.map((ingredient, index) => (
-              <Text key={index} style={styles.biggerStext}>
-                - {ingredient.name} ({ingredient.quantity === "Null" ? '' : `${ingredient.quantity} gramas`} {ingredient.unit === "Null" ? '' : `${ingredient.unit} unidades`})
-              </Text>
-            ))}
-          </View>
-        </Modal>
-      )}
+      <Text style={styles.Mtitle}>Tempo de Preparação: {selectedRecipe.preparation_time} minutos {'\n'}</Text>
+      <Text style={[styles.biggerLtext,{marginBottom:10}]}>{selectedRecipe.description}</Text>
+
+      {/* Alinhar Ingredientes e Valores Nutricionais em paralelo */}
+      <View style={styles.ingredientsContainer}>
+        <View style={styles.ingredientsColumn}>
+          <Text style={styles.Mtitle}>Ingredientes:</Text>
+          {selectedRecipe.ingredients.map((ingredient, index) => (
+            <Text key={index} style={styles.bbiggerStext}>
+              - {ingredient.name} ({ingredient.quantity === "Null" ? '' : `${ingredient.quantity} gramas`} {ingredient.unit === "Null" ? '' : `${ingredient.unit} unidades`})
+            </Text>
+          ))}
+        </View>
+        <View style={styles.nutritionalColumn}>
+          <Text style={styles.Mtitle}>Valores Nutricionais:</Text>
+          <Text style={styles.bbiggerStext}>Calorias: {selectedRecipe.calories} kcal</Text>
+          <Text style={styles.bbiggerStext}>Proteínas: {selectedRecipe.protein} g</Text>
+          <Text style={styles.bbiggerStext}>Carboidratos: {selectedRecipe.carbs} g</Text>
+          <Text style={styles.bbiggerStext}>Gorduras: {selectedRecipe.fats} g</Text>
+        </View>
+      </View>
+    </View>
+  </Modal>
+)}
     </View>
   );
 };
@@ -180,6 +194,20 @@ const styles = StyleSheet.create({
     alignSelf:'flex-end',
     
     marginLeft:180,
+  },
+  ingredientsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  ingredientsColumn: {
+    flex: 1,
+  },
+  nutritionalColumn: {
+    flex: 1,
+    paddingLeft: 10,
+  
+    
   },
 
   flatListContent: {
@@ -249,17 +277,25 @@ const styles = StyleSheet.create({
   },
   biggerLtext: {
     fontSize: 18,
+    alignSelf:'flex-start'
   },
   biggerStext: {
     fontSize: 16,
+    alignSelf:'flex-start'
+
+  }, bbiggerStext: {
+    fontSize: 16,
+    alignSelf:'flex-start',
+    
+
   },
   Mtitle: {
     fontSize: 18,
     fontWeight: 'bold',
     alignSelf: 'flex-start',
-    marginTop: 10,
-    marginLeft: 6,
+
   },
+
 });
 
 export default HomeScreen;

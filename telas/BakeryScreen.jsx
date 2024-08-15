@@ -80,6 +80,7 @@ const BakeryScreen = () => {
         <Image source={item.image} style={[styles.recipeImage, { width: imageWidth, height: imageHeight }]} />
         <Text style={styles.recipeName}>{item.name}{'\n'}</Text>
         <Text style={styles.biggerStext}>Tempo de preparação: {item.preparation_time} minutos</Text>
+        <Text style={styles.biggerStext}>Calorias: {item.calories} kcal</Text>
       </View>
     </TouchableOpacity>
   );
@@ -141,14 +142,27 @@ const BakeryScreen = () => {
             <Text style={styles.modalRecipeName}>{selectedRecipe.name}</Text>
 
             <Text style={styles.Mtitle}>Tempo de Preparação: {selectedRecipe.preparation_time} minutos {'\n'}</Text>
-            <Text style={styles.biggerLtext}>{selectedRecipe.description}</Text>
-            <Text style={styles.Mtitle}>Ingredientes:</Text>
-            {selectedRecipe.ingredients.map((ingredient, index) => (
-              <Text key={index} style={styles.biggerStext}>
-                - {ingredient.name} ({ingredient.quantity === "Null" ? '' : `${ingredient.quantity} gramas`} {ingredient.unit === "Null" ? '' : `${ingredient.unit} unidades`})
-              </Text>
-            ))}
-          </View>
+      <Text style={[styles.biggerLtext,{marginBottom:10}]}>{selectedRecipe.description}</Text>
+
+      {/* Alinhar Ingredientes e Valores Nutricionais em paralelo */}
+      <View style={styles.ingredientsContainer}>
+        <View style={styles.ingredientsColumn}>
+          <Text style={styles.Mtitle}>Ingredientes:</Text>
+          {selectedRecipe.ingredients.map((ingredient, index) => (
+            <Text key={index} style={styles.bbiggerStext}>
+              - {ingredient.name} ({ingredient.quantity === "Null" ? '' : `${ingredient.quantity} gramas`} {ingredient.unit === "Null" ? '' : `${ingredient.unit} unidades`})
+            </Text>
+          ))}
+        </View>
+        <View style={styles.nutritionalColumn}>
+          <Text style={styles.Mtitle}>Valores Nutricionais:</Text>
+          <Text style={styles.bbiggerStext}>Calorias: {selectedRecipe.calories} kcal</Text>
+          <Text style={styles.bbiggerStext}>Proteínas: {selectedRecipe.protein} g</Text>
+          <Text style={styles.bbiggerStext}>Carboidratos: {selectedRecipe.carbs} g</Text>
+          <Text style={styles.bbiggerStext}>Gorduras: {selectedRecipe.fats} g</Text>
+        </View>
+      </View>
+    </View>
         </Modal>
       )}
     </View>
@@ -179,6 +193,26 @@ const styles = StyleSheet.create({
     
     marginLeft:180,
   },
+  bbiggerStext: {
+    fontSize: 16,
+    alignSelf:'flex-start',
+    
+
+  },
+  ingredientsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  ingredientsColumn: {
+    flex: 1,
+  },
+  nutritionalColumn: {
+    flex: 1,
+    paddingLeft: 10,
+  
+    
+  },
   Stitle: {
     fontSize: 14,
     fontWeight: 'bold',
@@ -187,8 +221,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     alignSelf: 'flex-start',
-    marginTop:10,
-    marginLeft: 6,
+    
   },
   flatListContent: {
     justifyContent: 'center',
@@ -266,7 +299,8 @@ const styles = StyleSheet.create({
     marginTop: 10,
    },
    biggerStext:{
-    fontSize:16
+    fontSize:16,
+    alignSelf:'flex-start'
    }
 
 });

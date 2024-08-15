@@ -5,7 +5,7 @@ function removerAcentos(str) {
 }
 
 // Função para adicionar receitas
-export const addRecipe = (name, description, preparationTime, image, category, ingredients) => {
+export const addRecipe = (name, description, preparationTime, image, category, ingredients,calories,protein,carbs,fats,isVegan) => {
   const db = getDb();
 
   if (!db) {
@@ -27,8 +27,8 @@ export const addRecipe = (name, description, preparationTime, image, category, i
         } else {
           // Adicionar receita se não existir
           tx.executeSql(
-            'INSERT INTO recipes (name, description, preparation_time, image, category, ingredients) VALUES (?, ?, ?, ?, ?, ?)',
-            [name, description, preparationTime, image, category, ingredientsJSON],
+            'INSERT INTO recipes (name, description, preparation_time, image, category, ingredients,calories,protein,carbs,fats,isVegan) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [name, description, preparationTime, image, category, ingredientsJSON,calories,protein,carbs,fats,isVegan],
             (_, result) => {
               
             },
@@ -114,6 +114,7 @@ export const checkIngredientsAvailability = async (recipeId) => {
                     const recipeUnit = recipeIngredient.unit === "Null" ? null : recipeIngredient.unit;
                     const availableUnit = availableIngredient.unit === "Null" ? null : availableIngredient.unit;
 
+                    console.log(`Nome: ${recipeId}`);
                     console.log(`Comparando ingrediente: ${recipeIngredient.name}`);
                     console.log(`Quantidade necessária: ${recipeQuantity}, Quantidade disponível: ${availableQuantity}`);
                     console.log(`Unidade necessária: ${recipeUnit}, Unidade disponível: ${availableUnit}`);
@@ -213,260 +214,170 @@ export const clearIngredientTable = () => {
 
 // Função para adicionar as receitas iniciais
 export const addInitialRecipes = () => {
+  
   const recipes = [
     {
-      name: 'egg',
-      description: 'Modo de preparo:\n\n1. Quebre os 3 ovos em uma tigela.\n2. Adicione a farinha aos ovos e misture bem.\n3. Adicione o pão picado e misture até incorporar todos os ingredientes.\n4. Cozinhe em uma frigideira por cerca de 10 minutos ou até que os ovos estejam totalmente cozidos.\n',
-      preparationTime: 30,
-      image: require('../assets/images/Recypes/spagheti.jpg'),
-      category: 'refeicao',
-      ingredients: JSON.stringify([
-        {  "name": "eggs", "quantity": "Null", "unit": 3 }, // Requer 3 ovos
-        {  "name": "flour", "quantity": "100", "unit": "Null" }, // Requer 100 gramas de farinha
-        {"name": "pao", "quantity": "Null", "unit": "5" }
-      ]
-      )
+        name: 'egg',
+        description: 'Modo de preparo:\n\n1. Quebre os 3 ovos em uma tigela.\n2. Adicione a farinha aos ovos e misture bem.\n3. Adicione o pão picado e misture até incorporar todos os ingredientes.\n4. Cozinhe em uma frigideira por cerca de 10 minutos ou até que os ovos estejam totalmente cozidos.\n',
+        preparationTime: 30,
+        image: require('../assets/images/Recypes/spagheti.jpg'),
+        category: 'refeicao',
+        ingredients: JSON.stringify([
+            { "name": "eggs", "quantity": "Null", "unit": 3 },
+            { "name": "flour", "quantity": "100", "unit": "Null" },
+            { "name": "pao", "quantity": "Null", "unit": "5" }
+        ]),
+        calories: 250,
+        protein: 15,
+        carbs: 20,
+        fats: 10,
+        isVegan: 0
     },
     {
-      name: 'cake',
-      description: 'Good Cake. \n\nModo de preparo:\n1. Bata os 3 ovos em uma tigela.\n2. Adicione a farinha e misture bem até obter uma massa homogênea.\n3. Adicione o leite à mistura e continue mexendo até incorporar bem.\n4. Despeje a massa em uma forma e asse em forno pré-aquecido a 180°C por cerca de 25 minutos ou até dourar.',
-      preparationTime: 30,
-      image: require('../assets/images/Recypes/bolo.jpg'),
-      category: 'sobremesa',
-      ingredients: JSON.stringify([
-        {  "name": "eggs", "quantity": "Null", "unit": 3 }, // Requer 3 ovos
-        {  "name": "flour", "quantity": "100", "unit": "Null" }, // Requer 100 gramas de farinha
-        { "name": "leite", "quantity": "300", "unit": "Null" }
-      ]
-      )
-    },{
-      name: 'eggss',
-      description: 'Modo de preparo:\n\n1. Quebre os 3 ovos em uma tigela.\n2. Adicione a farinha aos ovos e misture bem.\n3. Adicione o pão picado e misture até incorporar todos os ingredientes.\n4. Cozinhe em uma frigideira por cerca de 10 minutos ou até que os ovos estejam totalmente cozidos.\n',
-      preparationTime: 30,
-      image: require('../assets/images/Recypes/spagheti.jpg'),
-      category: 'refeicao',
-      ingredients: JSON.stringify([
-        {  "name": "eggs", "quantity": "Null", "unit": 3 }, // Requer 3 ovos
-        {  "name": "flour", "quantity": "100", "unit": "Null" }, // Requer 100 gramas de farinha
-        {"name": "pao", "quantity": "Null", "unit": "5" }
-      ]
-      )
+        name: 'cake',
+        description: 'Good Cake. \n\nModo de preparo:\n1. Bata os 3 ovos em uma tigela.\n2. Adicione a farinha e misture bem até obter uma massa homogênea.\n3. Adicione o leite à mistura e continue mexendo até incorporar bem.\n4. Despeje a massa em uma forma e asse em forno pré-aquecido a 180°C por cerca de 25 minutos ou até dourar.',
+        preparationTime: 30,
+        image: require('../assets/images/Recypes/bolo.jpg'),
+        category: 'sobremesa',
+        ingredients: JSON.stringify([
+            { "name": "eggs", "quantity": "Null", "unit": 3 },
+            { "name": "flour", "quantity": "100", "unit": "Null" },
+            { "name": "leite", "quantity": "300", "unit": "Null" }
+        ]),
+        calories: 300,
+        protein: 5,
+        carbs: 50,
+        fats: 15,
+        isVegan: 0
     },
     {
-      name: 'cakes',
-      description: 'Good Cake. \n\nModo de preparo:\n1. Bata os 3 ovos em uma tigela.\n2. Adicione a farinha e misture bem até obter uma massa homogênea.\n3. Adicione o leite à mistura e continue mexendo até incorporar bem.\n4. Despeje a massa em uma forma e asse em forno pré-aquecido a 180°C por cerca de 25 minutos ou até dourar.',
-      preparationTime: 30,
-      image: require('../assets/images/Recypes/bolo.jpg'),
-      category: 'sobremesa',
-      ingredients: JSON.stringify([
-        {  "name": "eggs", "quantity": "Null", "unit": 3 }, // Requer 3 ovos
-        {  "name": "flour", "quantity": "100", "unit": "Null" }, // Requer 100 gramas de farinha
-        { "name": "leite", "quantity": "300", "unit": "Null" }
-      ]
-      )
-    },{
-      name: 'eggdd',
-      description: 'Modo de preparo:\n\n1. Quebre os 3 ovos em uma tigela.\n2. Adicione a farinha aos ovos e misture bem.\n3. Adicione o pão picado e misture até incorporar todos os ingredientes.\n4. Cozinhe em uma frigideira por cerca de 10 minutos ou até que os ovos estejam totalmente cozidos.\n',
-      preparationTime: 30,
-      image: require('../assets/images/Recypes/spagheti.jpg'),
-      category: 'refeicao',
-      ingredients: JSON.stringify([
-        {  "name": "eggs", "quantity": "Null", "unit": 3 }, // Requer 3 ovos
-        {  "name": "flour", "quantity": "100", "unit": "Null" }, // Requer 100 gramas de farinha
-        {"name": "pao", "quantity": "Null", "unit": "5" }
-      ]
-      )
+        name: 'eggss',
+        description: 'Modo de preparo:\n\n1. Quebre os 3 ovos em uma tigela.\n2. Adicione a farinha aos ovos e misture bem.\n3. Adicione o pão picado e misture até incorporar todos os ingredientes.\n4. Cozinhe em uma frigideira por cerca de 10 minutos ou até que os ovos estejam totalmente cozidos.\n',
+        preparationTime: 30,
+        image: require('../assets/images/Recypes/spagheti.jpg'),
+        category: 'refeicao',
+        ingredients: JSON.stringify([
+            { "name": "eggs", "quantity": "Null", "unit": 3 },
+            { "name": "flour", "quantity": "100", "unit": "Null" },
+            { "name": "pao", "quantity": "Null", "unit": "5" },
+            { "name": "banana", "quantity": "Null", "unit": "5" },
+            { "name": "pera", "quantity": "Null", "unit": "5" },
+            { "name": "maca", "quantity": "Null", "unit": "5" }
+        ]),
+        calories: 250,
+        protein: 15,
+        carbs: 20,
+        fats: 10,
+        isVegan: 1
     },
     {
-      name: 'cakeddd',
-      description: 'Good Cake. \n\nModo de preparo:\n1. Bata os 3 ovos em uma tigela.\n2. Adicione a farinha e misture bem até obter uma massa homogênea.\n3. Adicione o leite à mistura e continue mexendo até incorporar bem.\n4. Despeje a massa em uma forma e asse em forno pré-aquecido a 180°C por cerca de 25 minutos ou até dourar.',
-      preparationTime: 30,
-      image: require('../assets/images/Recypes/bolo.jpg'),
-      category: 'sobremesa',
-      ingredients: JSON.stringify([
-        {  "name": "eggs", "quantity": "Null", "unit": 3 }, // Requer 3 ovos
-        {  "name": "flour", "quantity": "100", "unit": "Null" }, // Requer 100 gramas de farinha
-        { "name": "leite", "quantity": "300", "unit": "Null" }
-      ]
-      )
-    },{
-      name: 'eggfff',
-      description: 'Modo de preparo:\n\n1. Quebre os 3 ovos em uma tigela.\n2. Adicione a farinha aos ovos e misture bem.\n3. Adicione o pão picado e misture até incorporar todos os ingredientes.\n4. Cozinhe em uma frigideira por cerca de 10 minutos ou até que os ovos estejam totalmente cozidos.\n',
-      preparationTime: 30,
-      image: require('../assets/images/Recypes/spagheti.jpg'),
-      category: 'refeicao',
-      ingredients: JSON.stringify([
-        {  "name": "eggs", "quantity": "Null", "unit": 3 }, // Requer 3 ovos
-        {  "name": "flour", "quantity": "100", "unit": "Null" }, // Requer 100 gramas de farinha
-        {"name": "pao", "quantity": "Null", "unit": "5" }
-      ]
-      )
+        name: 'cakes',
+        description: 'Good Cake. \n\nModo de preparo:\n1. Bata os 3 ovos em uma tigela.\n2. Adicione a farinha e misture bem até obter uma massa homogênea.\n3. Adicione o leite à mistura e continue mexendo até incorporar bem.\n4. Despeje a massa em uma forma e asse em forno pré-aquecido a 180°C por cerca de 25 minutos ou até dourar.',
+        preparationTime: 30,
+        image: require('../assets/images/Recypes/bolo.jpg'),
+        category: 'sobremesa',
+        ingredients: JSON.stringify([
+            { "name": "eggs", "quantity": "Null", "unit": 3 },
+            { "name": "flour", "quantity": "100", "unit": "Null" },
+            { "name": "leite", "quantity": "300", "unit": "Null" }
+        ]),
+        calories: 300,
+        protein: 5,
+        carbs: 50,
+        fats: 15,
+        isVegan: 0
     },
     {
-      name: 'cakefff',
-      description: 'Good Cake. \n\nModo de preparo:\n1. Bata os 3 ovos em uma tigela.\n2. Adicione a farinha e misture bem até obter uma massa homogênea.\n3. Adicione o leite à mistura e continue mexendo até incorporar bem.\n4. Despeje a massa em uma forma e asse em forno pré-aquecido a 180°C por cerca de 25 minutos ou até dourar.',
-      preparationTime: 30,
-      image: require('../assets/images/Recypes/bolo.jpg'),
-      category: 'sobremesa',
-      ingredients: JSON.stringify([
-        {  "name": "eggs", "quantity": "Null", "unit": 3 }, // Requer 3 ovos
-        {  "name": "flour", "quantity": "100", "unit": "Null" }, // Requer 100 gramas de farinha
-        { "name": "leite", "quantity": "300", "unit": "Null" }
-      ]
-      )
+        name: 'eggdd',
+        description: 'Modo de preparo:\n\n1. Quebre os 3 ovos em uma tigela.\n2. Adicione a farinha aos ovos e misture bem.\n3. Adicione o pão picado e misture até incorporar todos os ingredientes.\n4. Cozinhe em uma frigideira por cerca de 10 minutos ou até que os ovos estejam totalmente cozidos.\n',
+        preparationTime: 30,
+        image: require('../assets/images/Recypes/spagheti.jpg'),
+        category: 'refeicao',
+        ingredients: JSON.stringify([
+            { "name": "eggs", "quantity": "Null", "unit": 3 },
+            { "name": "flour", "quantity": "100", "unit": "Null" },
+            { "name": "pao", "quantity": "Null", "unit": "5" }
+        ]),
+        calories: 250,
+        protein: 15,
+        carbs: 20,
+        fats: 10,
+        isVegan: 0
     },
     {
-      name: 'Spaghetti Bolognese',
-      description: 'Delicious spaghetti with meat sauce.',
-      preparationTime: 30,
-      image: require('../assets/images/Recypes/spagheti.jpg'),
-      category: 'refeicao',
-      ingredients: JSON.stringify([
-        { name: 'spaghetti', quantity: '200', unit: 'grams' },
-        { name: 'ground beef', quantity: '300', unit: 'grams' },
-        { name: 'tomato sauce', quantity: '1', unit: 'cup' },
-        { name: 'onion', quantity: '1', unit: 'unit' },
-        { name: 'garlic', quantity: '3', unit: 'cloves' },
-        { name: 'olive oil', quantity: '2', unit: 'tablespoons' },
-        { name: 'salt', quantity: '1', unit: 'teaspoon' },
-        { name: 'pepper', quantity: '0.5', unit: 'teaspoon' }
-      ])
+        name: 'cakeddd',
+        description: 'Good Cake. \n\nModo de preparo:\n1. Bata os 3 ovos em uma tigela.\n2. Adicione a farinha e misture bem até obter uma massa homogênea.\n3. Adicione o leite à mistura e continue mexendo até incorporar bem.\n4. Despeje a massa em uma forma e asse em forno pré-aquecido a 180°C por cerca de 25 minutos ou até dourar.',
+        preparationTime: 30,
+        image: require('../assets/images/Recypes/bolo.jpg'),
+        category: 'sobremesa',
+        ingredients: JSON.stringify([
+            { "name": "eggs", "quantity": "Null", "unit": 3 },
+            { "name": "flour", "quantity": "100", "unit": "Null" },
+            { "name": "leite", "quantity": "300", "unit": "Null" }
+        ]),
+        calories: 300,
+        protein: 5,
+        carbs: 50,
+        fats: 15,
+        isVegan: 0
     },
     {
-      name: 'Chicken Curry',
-      description: 'Spicy and flavorful chicken curry.',
-      preparationTime: 45,
-      image: require('../assets/images/Recypes/spagheti.jpg'),
-      category: 'refeicao',
-      ingredients: JSON.stringify([
-        { name: 'chicken', quantity: '500', unit: 'grams' },
-        { name: 'curry powder', quantity: '2', unit: 'tablespoons' },
-        { name: 'coconut milk', quantity: '1', unit: 'cup' },
-        { name: 'onion', quantity: '1', unit: 'unit' },
-        { name: 'garlic', quantity: '3', unit: 'cloves' },
-        { name: 'ginger', quantity: '1', unit: 'inch piece' },
-        { name: 'salt', quantity: '1', unit: 'teaspoon' },
-        { name: 'pepper', quantity: '0.5', unit: 'teaspoon' }
-      ])
+        name: 'eggfff',
+        description: 'Modo de preparo:\n\n1. Quebre os 3 ovos em uma tigela.\n2. Adicione a farinha aos ovos e misture bem.\n3. Adicione o pão picado e misture até incorporar todos os ingredientes.\n4. Cozinhe em uma frigideira por cerca de 10 minutos ou até que os ovos estejam totalmente cozidos.\n',
+        preparationTime: 30,
+        image: require('../assets/images/Recypes/spagheti.jpg'),
+        category: 'refeicao',
+        ingredients: JSON.stringify([
+            { "name": "eggs", "quantity": "Null", "unit": 3 },
+            { "name": "flour", "quantity": "100", "unit": "Null" },
+            { "name": "pao", "quantity": "Null", "unit": "5" }
+        ]),
+        calories: 250,
+        protein: 15,
+        carbs: 20,
+        fats: 10,
+        isVegan: 0
     },
     {
-      name: 'Grilled Cheese Sandwich',
-      description: 'Classic grilled cheese sandwich with a golden crust.',
-      preparationTime: 10,
-      image: require('../assets/images/Recypes/spagheti.jpg'),
-      category: 'refeicao',
-      ingredients: JSON.stringify([
-        { name: 'bread', quantity: 'Null', unit: '2' },
-        { name: 'cheese', quantity: '200', unit: 'Null' },
-        { name: 'butter', quantity: '50', unit: 'Null' }
-      ])
+        name: 'cakefff',
+        description: 'Good Cake. \n\nModo de preparo:\n1. Bata os 3 ovos em uma tigela.\n2. Adicione a farinha e misture bem até obter uma massa homogênea.\n3. Adicione o leite à mistura e continue mexendo até incorporar bem.\n4. Despeje a massa em uma forma e asse em forno pré-aquecido a 180°C por cerca de 25 minutos ou até dourar.',
+        preparationTime: 30,
+        image: require('../assets/images/Recypes/bolo.jpg'),
+        category: 'sobremesa',
+        ingredients: JSON.stringify([
+            { "name": "eggs", "quantity": "Null", "unit": 3 },
+            { "name": "flour", "quantity": "100", "unit": "Null" },
+            { "name": "leite", "quantity": "300", "unit": "Null" }
+        ]),
+        calories: 300,
+        protein: 5,
+        carbs: 50,
+        fats: 15,
+        isVegan: 0
     },
     {
-      name: 'Caesar Salad',
-      description: 'Fresh salad with Caesar dressing and croutons.',
-      preparationTime: 15,
-      image: require('../assets/images/Recypes/spagheti.jpg'),
-      category: 'refeicao',
-      ingredients: JSON.stringify([
-        { name: 'romaine lettuce', quantity: '1', unit: 'head' },
-        { name: 'croutons', quantity: '1', unit: 'cup' },
-        { name: 'Caesar dressing', quantity: '1/2', unit: 'cup' },
-        { name: 'parmesan cheese', quantity: '1/4', unit: 'cup' }
-      ])
-    },
-    {
-      name: 'Beef Tacos',
-      description: 'Tasty beef tacos with fresh toppings.',
-      preparationTime: 20,
-      image: require('../assets/images/Recypes/spagheti.jpg'),
-      category: 'refeicao',
-      ingredients: JSON.stringify([
-        { name: 'ground beef', quantity: '300', unit: 'grams' },
-        { name: 'taco shells', quantity: '8', unit: 'shells' },
-        { name: 'lettuce', quantity: '1', unit: 'cup' },
-        { name: 'tomato', quantity: '1', unit: 'unit' },
-        { name: 'cheese', quantity: '1/2', unit: 'cup' },
-        { name: 'sour cream', quantity: '1/4', unit: 'cup' }
-      ])
-    },
-    {
-      name: 'Chocolate Cake',
-      description: 'Rich and moist chocolate cake.',
-      preparationTime: 60,
-      image: require('../assets/images/Recypes/bolo.jpg'),
-      category: 'sobremesa',
-      ingredients: JSON.stringify([
-        { name: 'flour', quantity: '1.5', unit: 'cups' },
-        { name: 'sugar', quantity: '1', unit: 'cup' },
-        { name: 'cocoa powder', quantity: '0.75', unit: 'cup' },
-        { name: 'baking powder', quantity: '1.5', unit: 'teaspoons' },
-        { name: 'eggs', quantity: '2', unit: 'units' },
-        { name: 'milk', quantity: '1', unit: 'cup' },
-        { name: 'butter', quantity: '0.5', unit: 'cup' }
-      ])
-    },
-    {
-      name: 'Apple Pie',
-      description: 'Classic apple pie with a flaky crust.',
-      preparationTime: 90,
-      image: require('../assets/images/Recypes/bolo.jpg'),
-      category: 'sobremesa',
-      ingredients: JSON.stringify([
-        { name: 'apples', quantity: '6', unit: 'units' },
-        { name: 'flour', quantity: '1.5', unit: 'cups' },
-        { name: 'sugar', quantity: '0.75', unit: 'cup' },
-        { name: 'butter', quantity: '0.5', unit: 'cup' },
-        { name: 'cinnamon', quantity: '1', unit: 'teaspoon' },
-        { name: 'pie crust', quantity: '2', unit: 'crusts' }
-      ])
-    },
-    {
-      name: 'Lemon Tart',
-      description: 'Tangy lemon tart with a buttery crust.',
-      preparationTime: 45,
-      image: require('../assets/images/Recypes/bolo.jpg'),
-      category: 'sobremesa',
-      ingredients: JSON.stringify([
-        { name: 'lemons', quantity: '4', unit: 'units' },
-        { name: 'flour', quantity: '1', unit: 'cup' },
-        { name: 'sugar', quantity: '0.75', unit: 'cup' },
-        { name: 'butter', quantity: '0.5', unit: 'cup' },
-        { name: 'eggs', quantity: '3', unit: 'units' }
-      ])
-    },
-    {
-      name: 'Vanilla Ice Cream',
-      description: 'Creamy vanilla ice cream made with real vanilla beans.',
-      preparationTime: 120,
-      image: require('../assets/images/Recypes/bolo.jpg'),
-      category: 'sobremesa',
-      ingredients: JSON.stringify([
-        { name: 'milk', quantity: '2', unit: 'cups' },
-        { name: 'cream', quantity: '1', unit: 'cup' },
-        { name: 'sugar', quantity: '0.75', unit: 'cup' },
-        { name: 'vanilla beans', quantity: '2', unit: 'beans' }
-      ])
-    },
-    {
-      name: 'Brownies',
-      description: 'Fudgy brownies with a crackly top.',
-      preparationTime: 40,
-      image: require('../assets/images/Recypes/bolo.jpg'),
-      category: 'sobremesa',
-      ingredients: JSON.stringify([
-        { name: 'flour', quantity: '1', unit: 'cup' },
-        { name: 'sugar', quantity: '1', unit: 'cup' },
-        { name: 'cocoa powder', quantity: '0.5', unit: 'cup' },
-        { name: 'butter', quantity: '0.5', unit: 'cup' },
-        { name: 'eggs', quantity: '2', unit: 'units' },
-        { name: 'chocolate', quantity: '0.5', unit: 'cup' }
-      ])
+        name: 'Grilled Cheese Sandwich',
+        description: 'Classic grilled cheese sandwich with a golden crust.',
+        preparationTime: 10,
+        image: require('../assets/images/Recypes/spagheti.jpg'),
+        category: 'refeicao',
+        ingredients: JSON.stringify([
+            { name: 'bread', quantity: 'Null', unit: '2' },
+            { name: 'cheese', quantity: '200', unit: 'Null' },
+            { name: 'butter', quantity: '50', unit: 'Null' }
+        ]),
+        calories: 400,
+        protein: 10,
+        carbs: 40,
+        fats: 30,
+        isVegan: 0
     }
-  ];
+];
+
 
   recipes.forEach(recipe => {
     const ingredientsJSON = recipe.ingredients; // A lista de ingredientes já está em JSON
-    addRecipe(recipe.name, recipe.description, recipe.preparationTime, recipe.image, recipe.category, ingredientsJSON);
+    addRecipe(recipe.name, recipe.description, recipe.preparationTime, recipe.image, recipe.category, ingredientsJSON,recipe.calories,recipe.protein,recipe.carbs,recipe.fats,recipe.isVegan);
   });
 };
 
