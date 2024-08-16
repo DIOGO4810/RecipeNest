@@ -19,8 +19,8 @@ const HomeScreen = () => {
 
       db.transaction(tx => {
         tx.executeSql(
-          'SELECT * FROM recipes WHERE category = ? AND isVegan = ?',
-            ['refeicao', 1], // Aqui, 1 representa true, ou seja, receitas veganas
+          'SELECT * FROM recipes WHERE category = ? ',
+            ['refeicao'], // Aqui, 1 representa true, ou seja, receitas veganas
           async (_, { rows }) => {
             const recipes = rows._array.map(recipe => {
               const ingredients = JSON.parse(recipe.ingredients.replace(/\\"/g, '"').replace(/^"|"$/g, ''));
@@ -68,8 +68,6 @@ const HomeScreen = () => {
 
   // Calcula a largura dos itens com base no número de colunas
   const itemWidth = isTwoColumn ? 160: 300;
-  // Calcula a altura dos itens
-  const itemHeight = isTwoColumn ? 250 : 300; // Exemplo de altura com base no número de colunas
 
   const imageWidth = isTwoColumn ? 100 : 200;
 
