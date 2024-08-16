@@ -1,17 +1,16 @@
 import React from 'react';
-import { Text,TouchableOpacity } from 'react-native';
+import { Text,TouchableOpacity,Switch,View, } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createStackNavigator } from '@react-navigation/stack';
-import { createDrawerNavigator } from '@react-navigation/drawer';
 
+import { createDrawerNavigator , DrawerContentScrollView, DrawerItemList} from '@react-navigation/drawer';
+import { createStackNavigator } from '@react-navigation/stack';
 import HomeScreen from '../telas/HomeScreen';
 import BakeryScreen from '../telas/BakeryScreen';
 import ingredientScreen from '../telas/ingredientSreen';
 import SettingsScreen from '../telas/SettingsScreen';
 import EveryRecipe from '../telas/EveryRecipe';
-
+import {useVegan} from '../Contexts/VeganContext';
 import { Ionicons, MaterialCommunityIcons,Feather } from '@expo/vector-icons';
-
 
 const Drawer = createDrawerNavigator();
 const HomeStack = createStackNavigator();
@@ -26,65 +25,88 @@ function HomeStackNavigator() {
     );
 }
 
+function CustomDrawerContent(props) {
+  const { isVeganChecked, setIsVeganChecked } = useVegan();
+
+  const handleToggleSwitch = () => {
+      setIsVeganChecked(prevState => !prevState);
+  };
+
+  return (
+      <DrawerContentScrollView {...props}>
+     
+          <DrawerItemList {...props} />
+          
+          
+          <View style={{ marginLeft:20,  flexDirection:'row', alignItems: 'center',   }}>
+              <Text style={{fontSize: 14, fontWeight:'500',color:'#6c6c6c'}} >Receitas Vegetarianas</Text>
+              <Switch
+                  value={isVeganChecked}
+                  onValueChange={handleToggleSwitch}
+                  style={{marginLeft:10,}}
+                  thumbColor={isVeganChecked ? '#59b300' : '#e6ffcc'}
+                  trackColor={{false: '#d9ffb3', true: '#408000'}}
+              />
+          </View>
+      </DrawerContentScrollView>
+  );
+}
+
+
 function DrawerNavigator() {
-    return (
-      <Drawer.Navigator
-        screenOptions={({ navigation }) => ({
 
+  return (
+    <Drawer.Navigator
+    drawerContent={(props) => <CustomDrawerContent {...props} />} // Usando o componente CustomDrawerContent
+
+      screenOptions={({ navigation }) => ({
         drawerStyle: {
-                width: 220,
-                    }, 
-              
-              
-          headerStyle: {
-            backgroundColor: '#fff',
-          },
-
-
-          headerTitleAlign: 'left', // Alinha o título à esquerda
-
-          headerTitle: () => (
-            <Text style={{ marginLeft: 10, fontSize: 20, fontWeight: '500' }}>
-              Home
-            </Text>
-          ),
-
-
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={() => navigation.openDrawer()} // Abre o menu lateral
-              style={{ marginRight: 15 }}
-              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }} // Adiciona área clicável extra 
-
-            >
+          width: 220,
+        },
+        headerStyle: {
+          backgroundColor: '#fff',
+        },
+        headerTitleAlign: 'left',
+        headerTitle: () => (
+          <Text style={{ marginLeft: 10, fontSize: 20, fontWeight: '500' }}>
+            Home
+          </Text>
+        ),
+        headerRight: () => (
+          <TouchableOpacity
+            onPress={() => navigation.openDrawer()} // Abre o menu lateral
+            style={{ marginRight: 15 }}
+            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }} // Adiciona área clicável extra 
+          >
             <Feather name="menu" size={24} color="black" />
-            </TouchableOpacity>
-          ),
+          </TouchableOpacity>
+        ),
+        headerLeft: () => null,
+        drawerPosition: "right"
+      })}
+    >
 
-          headerLeft: () => null, // Remove o botão padrão do lado esquerdo
 
-          drawerPosition:"right" // Define a posição do drawer para a direita
+      <Drawer.Screen
+        name="HomeStack"
+        component={HomeStackNavigator}
+        options={{ drawerLabel: 'Início' }}
+      />
+      <Drawer.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ drawerLabel: 'Configurações' }}
+      />
+      <Drawer.Screen
+        name="Todas_Receitas"
+        component={EveryRecipe}
+        options={{ drawerLabel: 'Todas as Receitas' }}
+      />
+    </Drawer.Navigator>
+  );
+}
 
-        })}
-      >
-        <Drawer.Screen
-          name="HomeStack"
-          component={HomeStackNavigator}
-          options={{ drawerLabel: 'Início' }}
-        />
-        <Drawer.Screen
-          name="Settings"
-          component={SettingsScreen}
-          options={{ drawerLabel: 'Configurações' }}
-        />
-        <Drawer.Screen
-          name="Todas_Receiats"
-          component={EveryRecipe}
-          options={{ drawerLabel: 'Todas as Receitas' }}
-        />
-      </Drawer.Navigator>
-    );
-  }
+
 
 function BottomTabNavigator() {
     return (

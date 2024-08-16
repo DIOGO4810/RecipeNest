@@ -11,7 +11,7 @@ const EveryRecipe = () => {
 
       db.transaction(tx => {
         tx.executeSql(
-          'SELECT * FROM recipes', 
+          'SELECT * FROM recipes WHERE category = ? ',['refeicao', ], 
           [],
           (_, { rows }) => {
             setRecipes(rows._array);
