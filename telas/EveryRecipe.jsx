@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, Modal } from 'react-native';
 import { getDb } from '../baseDeDados/database';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 
 const EveryRecipe = () => {
@@ -9,13 +10,13 @@ const EveryRecipe = () => {
   const [modalVisible, setModalVisible] = useState(false);
 
 
-  useEffect(() => {
+ 
     const fetchRecipes = () => {
       const db = getDb();
 
       db.transaction(tx => {
         tx.executeSql(
-          'SELECT * FROM recipes WHERE category = ? ',['refeicao', ], 
+          'SELECT * FROM recipes ', 
           [],
           (_, { rows }) => {
             const fetchedRecipes = rows._array.map(recipe => {
@@ -25,7 +26,8 @@ const EveryRecipe = () => {
                 ingredients
               };
             });
-            setRecipes(fetchedRecipes);          },
+            setRecipes(fetchedRecipes);          
+          },
           (tx, error) => {
             console.error('Erro ao buscar receitas', error);
           }
@@ -33,8 +35,15 @@ const EveryRecipe = () => {
       });
     };
 
-    fetchRecipes();
-  }, []);
+    useFocusEffect(
+      useCallback(() => {
+        fetchRecipes();
+      }, []) 
+      );
+  
+
+
+
   const openModal = (recipe) => {
     setSelectedRecipe(recipe);
     setModalVisible(true);
@@ -79,9 +88,7 @@ const EveryRecipe = () => {
     <View style={styles.container}>
     
      
-      {recipes.length === 0 ? (
-        <Text>Nenhuma receita disponível.</Text>
-      ) : (
+      
         <FlatList
          ListHeaderComponent={renderHeader}
           numColumns={2}
@@ -90,7 +97,7 @@ const EveryRecipe = () => {
           renderItem={renderItem}
           contentContainerStyle={styles.flatListContent}
         />
-      )}
+      
 
 {selectedRecipe && (
   <Modal
