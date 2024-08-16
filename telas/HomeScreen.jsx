@@ -77,7 +77,7 @@ const HomeScreen = () => {
 
   // Calcula a largura dos itens com base no número de colunas
   const itemWidth = isTwoColumn ? 160: 300;
-  
+
   const imageWidth = isTwoColumn ? 100 : 200;
 
   const imageHeight = isTwoColumn ? 100 : 200;
