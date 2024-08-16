@@ -15,7 +15,7 @@ const EveryRecipe = () => {
 
       db.transaction(tx => {
         tx.executeSql(
-          'SELECT * FROM recipes', 
+          'SELECT * FROM recipes WHERE category = ? ',['refeicao', ], 
           [],
           (_, { rows }) => {
             const fetchedRecipes = rows._array.map(recipe => {

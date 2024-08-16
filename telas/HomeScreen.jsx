@@ -4,27 +4,36 @@ import { checkIngredientsAvailability } from '../baseDeDados/dataUtils';
 import { getDb } from '../baseDeDados/database';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
+import { useVegan } from '../Contexts/VeganContext';
 
 const HomeScreen = () => {
   const [recipes, setRecipes] = useState([]);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [isTwoColumn, setIsTwoColumn] = useState(false); // Estado para controlar o número de colunas
+  const [isTwoColumn, setIsTwoColumn] = useState(false);
+  const { isVeganChecked } = useVegan();
 
-  const navigation = useNavigation();  // Usado para navegação
-
+  const navigation = useNavigation();
+ 
   const fetchRecipes = async () => {
     try {
       const db = getDb();
 
       db.transaction(tx => {
+        let query = 'SELECT * FROM recipes WHERE category = ?';
+        let params = ['refeicao'];
+
+        if (isVeganChecked) {
+          query += ' AND isVegan = ?';
+          params.push(1); // 1 representa receitas vegetarianas
+        }
+
         tx.executeSql(
-          'SELECT * FROM recipes WHERE category = ? ',
-            ['refeicao'], // Aqui, 1 representa true, ou seja, receitas veganas
+          query,
+          params,
           async (_, { rows }) => {
             const recipes = rows._array.map(recipe => {
               const ingredients = JSON.parse(recipe.ingredients.replace(/\\"/g, '"').replace(/^"|"$/g, ''));
-              
               return {
                 ...recipe,
                 ingredients
@@ -49,12 +58,12 @@ const HomeScreen = () => {
       console.error('Erro ao buscar receitas:', error);
     }
   };
-
   useFocusEffect(
     useCallback(() => {
       fetchRecipes();
-    }, [])
-  );
+    }, [isVeganChecked]) // O filtro vegano é dependência da busca
+    );
+  
 
   const openModal = (recipe) => {
     setSelectedRecipe(recipe);
@@ -91,23 +100,25 @@ const HomeScreen = () => {
       <TouchableOpacity
         style={styles.columns}
         onPress={() => setIsTwoColumn(prev => !prev)}
-        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }} // Adiciona área clicável extra 
+        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
       >
         {isTwoColumn ? 
           <Feather name="square" size={24} color="black" /> :
           <Feather name="grid" size={24} color="black" />
         }
       </TouchableOpacity>
+   
     </View>
-    );
-  
+  );
 
   return (
     <View style={styles.container}>
     
      
       {recipes.length === 0 ? (
+        <View>
         <Text>Nenhuma receita disponível.</Text>
+        </View>
       ) : (
         <FlatList
           ListHeaderComponent={renderHeader}
@@ -120,13 +131,13 @@ const HomeScreen = () => {
         />
       )}
 
-{selectedRecipe && (
-  <Modal
+   {selectedRecipe && (
+    <Modal
     visible={modalVisible}
     transparent={true}
     animationType="slide"
     onRequestClose={closeModal}
-  >
+    >
     {/* Fundo com opacidade fixa */}
     <TouchableOpacity style={styles.modalBackground} onPress={closeModal}>
       <View style={styles.modalBackground} />
@@ -169,6 +180,7 @@ const HomeScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  
   container: {
     flex: 1,
     justifyContent: 'flex-start',

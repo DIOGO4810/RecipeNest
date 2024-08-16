@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import BottomTabNavigator from './navegacao/Appnavigator';
 import { initializeDatabase } from './baseDeDados/database';  
 import { addInitialRecipes, addRecipe, deleteRecipe, clearRecipesTable, clearIngredientTable } from './baseDeDados/dataUtils';
+import { VeganProvider } from './Contexts/VeganContext';
 
 export default function App() {
   const [isDatabaseReady, setIsDatabaseReady] = useState(false);
@@ -12,7 +13,7 @@ export default function App() {
       try {
         console.log("A inicializar a base de dados\n\n\n");
         await initializeDatabase(); // Aguarda a inicialização do banco de dados
-        clearRecipesTable();
+        //clearRecipesTable();
         //clearIngredientTable();     // Util para quando se quer mexer na base de dados
         await addInitialRecipes();  // Adiciona receitas após a inicialização
         setIsDatabaseReady(true);   // Atualiza o estado para indicar que a configuração está concluída
@@ -29,8 +30,16 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <BottomTabNavigator />
-    </NavigationContainer>
+    
+     <VeganProvider>
+     <NavigationContainer>
+
+        <BottomTabNavigator /> 
+
+     </NavigationContainer>
+     </VeganProvider>
+   
+  
+
   );
 }
