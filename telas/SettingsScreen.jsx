@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 
 const SettingsScreen = () => {
@@ -7,11 +6,11 @@ const SettingsScreen = () => {
       <ScrollView contentContainerStyle={styles.footerContent}>
         <Text style={styles.footerTitle}>Informações dos Donos</Text>
         <Text style={styles.footerText}>
-          Nome dos Donos: Diogo José Ribeiro {'\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t'} Carolina Silva Martins
+          Nome dos Donos: Diogo José Ribeiro e Ribeiro {'\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t'} Carolina Silva Martins
         </Text>
         <Text style={styles.footerText}>E-mail: exemplo@dominio.com</Text>
         <Text style={styles.footerText}>
-          Desenvolvido por: Diogo José Ribeiro {'\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t'} Carolina Silva Martins
+          Desenvolvido por: Diogo José Ribeiro e Ribeiro {'\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t'} Carolina Silva Martins
         </Text>
       </ScrollView>
     </View>

@@ -21,7 +21,6 @@
     "@react-native-community/slider": "^4.5.2",
     "@react-navigation/drawer": "^6.7.2",
     "@react-navigation/native": "^6.0.2",
-    "@react-navigation/stack": "^6.4.1",
     "babel-preset-expo": "^10.0.0",
     "expo": "~50.0.14",
     "expo-constants": "~15.4.6",

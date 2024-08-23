@@ -5,8 +5,9 @@ import Icon from 'react-native-vector-icons/Ionicons';
 
 import { getDb } from '../baseDeDados/database';
 import ingredientImages from '../imageMapping';
+import { Feather,FontAwesome5 } from '@expo/vector-icons';
 
-const AvailableIngredientsScreen = () => {
+const ShoppingList = () => {
   const [ingredientName, setIngredientName] = useState('');
   const [quantity, setQuantity] = useState(null);
   const [unit, setUnit] = useState(null);
@@ -23,7 +24,7 @@ const AvailableIngredientsScreen = () => {
     console.log('Carregando ingredientes...');
     db.transaction(tx => {
       tx.executeSql(
-        'SELECT * FROM ingredients',
+        'SELECT * FROM buylist',
         [],
         (_, { rows }) => {
           console.log('Ingredientes carregados:', rows._array);
@@ -32,7 +33,7 @@ const AvailableIngredientsScreen = () => {
             name: item.name,
             quantity: item.quantity,
             unit: item.unit,
-            image: item.image,
+            
           }));
           setIngredients(ingredientsArray);
         },
@@ -56,8 +57,8 @@ const AvailableIngredientsScreen = () => {
     const imageName = ingredientName.toLowerCase().replace(/\s+/g, '-');
     db.transaction(tx => {
       tx.executeSql(
-        'INSERT INTO ingredients (name, quantity, unit, image) VALUES (?, ?, ?, ?)',
-        [ingredientName, quantity, unit === null ? null : unit, imageName],
+        'INSERT INTO buylist (name, quantity, unit) VALUES (?, ?, ?)',
+        [ingredientName, quantity, unit === null ? null : unit],
         () => {
           loadIngredients();
           setIngredientName('');
@@ -75,7 +76,7 @@ const AvailableIngredientsScreen = () => {
     console.log('Removendo ingrediente com id:', id);
     db.transaction(tx => {
       tx.executeSql(
-        'DELETE FROM ingredients WHERE id = ?',
+        'DELETE FROM buylist WHERE id = ?',
         [id],
         (_, result) => {
           console.log('Ingrediente removido com sucesso:', result);
@@ -83,6 +84,38 @@ const AvailableIngredientsScreen = () => {
         },
         (tx, error) => {
           console.error('Erro ao remover ingrediente:', error);
+        }
+      );
+    });
+  };
+  
+  const moveIngredientToAvailable = (item) => {
+    const { id, name, quantity, unit } = item;
+    console.log('Movendo ingrediente para a tabela de disponíveis:', item);
+  
+    db.transaction(tx => {
+      // Insert the ingredient into the 'ingredients' table
+      tx.executeSql(
+        'INSERT INTO ingredients (name, quantity, unit, image) VALUES (?, ?, ?, ?)',
+        [name, quantity, unit, name.toLowerCase().replace(/\s+/g, '-')],
+        (_, result) => {
+          console.log('Ingrediente adicionado à tabela de disponíveis:', result);
+  
+          // Delete the ingredient from the 'buylist' table
+          tx.executeSql(
+            'DELETE FROM buylist WHERE id = ?',
+            [id],
+            (_, result) => {
+              console.log('Ingrediente removido da lista de compras:', result);
+              loadIngredients();
+            },
+            (tx, error) => {
+              console.error('Erro ao remover ingrediente da lista de compras:', error);
+            }
+          );
+        },
+        (tx, error) => {
+          console.error('Erro ao adicionar ingrediente à tabela de disponíveis:', error);
         }
       );
     });
@@ -97,7 +130,7 @@ const AvailableIngredientsScreen = () => {
     setIngredients(updatedIngredients);
     db.transaction(tx => {
       tx.executeSql(
-        `UPDATE ingredients SET ${type} = ? WHERE id = ?`,
+        `UPDATE buylist SET ${type} = ? WHERE id = ?`,
         [value, id],
         (_, result) => {
           console.log('Ingrediente atualizado com sucesso:', result);
@@ -115,10 +148,13 @@ const AvailableIngredientsScreen = () => {
     console.log('Renderizando ingrediente:', item);
 
     return (
-      <View style={[styles.ingredientItem, ingredients.length === 1 ? { width: '70%' } : { width: '48%' }]}>
+        <View style={[styles.ingredientItem, ingredients.length === 1 ? { width: '70%' } : { width: '48%' }]}>
         <View style={styles.detailsContainer}>
           <View style={{flexDirection:'row', alignSelf:'center',marginBottom:10}}>
-          <Text style={styles.title}>{item.name}</Text>
+          <Text style={styles.biggerTextName}>{item.name}</Text>
+          <TouchableOpacity onPress={() => moveIngredientToAvailable(item)} style={styles.checkbutton}>
+          <FontAwesome5 name="check" size={24} color="#4dff4d" />
+          </TouchableOpacity>
           <TouchableOpacity onPress={() => removeIngredient(item.id)} style={styles.removeButton}>
           <Icon name="trash-outline" size={24} color="#db8a8a" />
           </TouchableOpacity>
@@ -187,7 +223,7 @@ const AvailableIngredientsScreen = () => {
              <Text style={styles.text}>{"Adicionar"}</Text>
              </Pressable>
              <View style={{width:'100%',height:2,backgroundColor:'rgba(0,0,0,0.4)',marginVertical:20}}></View>
-             <Text style={[styles.title]}>O meu frigorífico</Text>
+             <Text style={[styles.title]}>Lista de compras</Text>
           </View >
         }
         
@@ -221,11 +257,16 @@ const styles = StyleSheet.create({
   biggerText: {
     fontSize: 20,
   },
+  biggerTextName: {
+    fontSize: 20,
+    marginLeft:20,
+    marginTop:10
+  },
   input: {
     height: 40,
     borderColor: 'gray',
     borderWidth: 1,
-    backgroundColor: '#e6fff7',
+    backgroundColor: '#ffedcc',
     marginBottom:20,
     padding: 10,
     width: '80%',
@@ -243,7 +284,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     paddingHorizontal: 10,
     borderRadius: 10,
-    backgroundColor: '#ccffee',
+    backgroundColor: '#ffc96f',
     padding: 10,
   },
   detailsContainer: {
@@ -253,13 +294,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   removeButton: {
-    padding: 10,
-    marginBottom:5,
     borderRadius: 5,
-    marginLeft:30,
+    marginTop:10,
+    marginLeft:4    
+},
+checkbutton:{
+    borderRadius: 5,
+    marginLeft:20,
+    marginTop:10,
+
   },
   button:{
-    backgroundColor: '#99ffdd',
+    backgroundColor: '#ffdb99',
     borderRadius: 10,
   },
   text:{
@@ -269,4 +315,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default AvailableIngredientsScreen;
+export default ShoppingList;

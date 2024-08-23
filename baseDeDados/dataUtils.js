@@ -114,10 +114,10 @@ export const checkIngredientsAvailability = async (recipeId) => {
                     const recipeUnit = recipeIngredient.unit === "Null" ? null : recipeIngredient.unit;
                     const availableUnit = availableIngredient.unit === "Null" ? null : availableIngredient.unit;
 
-                    console.log(`Nome: ${recipeId}`);
-                    console.log(`Comparando ingrediente: ${recipeIngredient.name}`);
-                    console.log(`Quantidade necessária: ${recipeQuantity}, Quantidade disponível: ${availableQuantity}`);
-                    console.log(`Unidade necessária: ${recipeUnit}, Unidade disponível: ${availableUnit}`);
+                   // console.log(`Nome: ${recipeId}`);
+                   // console.log(`Comparando ingrediente: ${recipeIngredient.name}`);
+                   // console.log(`Quantidade necessária: ${recipeQuantity}, Quantidade disponível: ${availableQuantity}`);
+                   // console.log(`Unidade necessária: ${recipeUnit}, Unidade disponível: ${availableUnit}`);
 
                     const quantityCheck = recipeQuantity === null || isNaN(recipeQuantity) || Number(availableQuantity) >= Number(recipeQuantity);
                     const unitCheck = (recipeUnit === null) || (availableUnit !== null && Number(availableUnit) >= Number(recipeUnit));

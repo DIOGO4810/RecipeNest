@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import  { useState, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, Modal } from 'react-native';
 import { checkIngredientsAvailability } from '../baseDeDados/dataUtils';
 import { getDb } from '../baseDeDados/database';
@@ -10,6 +10,7 @@ const BakeryScreen = () => {
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [isTwoColumn, setIsTwoColumn] = useState(false); // Estado para controlar o número de colunas
+  const [recypeCount,setRecypeCount] = useState(0);
 
 
   const fetchRecipes = async () => {
@@ -38,6 +39,7 @@ const BakeryScreen = () => {
             const filteredRecipes = validRecipes.filter(recipe => recipe !== null);
 
             setRecipes(filteredRecipes);
+            setRecypeCount(filteredRecipes.length);
           },
           (tx, error) => {
             console.error('Erro ao buscar receitas:', error);
@@ -87,19 +89,23 @@ const BakeryScreen = () => {
 
     // Render do cabeçalho
     const renderHeader = () => (
-      <View style={styles.subHeader}>
-      <Text style={styles.title}>Receitas</Text>
+      <View>
+        <View style={styles.subHeader}>
+      <Text style={styles.title}> Receitas </Text>
       <TouchableOpacity
         style={styles.columns}
         onPress={() => setIsTwoColumn(prev => !prev)}
-        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }} // Adiciona área clicável extra 
+        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
       >
         {isTwoColumn ? 
           <Feather name="square" size={24} color="black" /> :
           <Feather name="grid" size={24} color="black" />
         }
       </TouchableOpacity>
+
     </View>
+      <Text style={styles.subTitle}>Disponiveis: {recypeCount}</Text>
+      </View>
     );
   
 
@@ -301,7 +307,12 @@ const styles = StyleSheet.create({
    biggerStext:{
     fontSize:16,
     alignSelf:'flex-start'
-   }
+   },
+   subTitle: {
+    fontSize: 18,
+    fontWeight:'500',
+    marginLeft:22
+  }
 
 });
 

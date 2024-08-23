@@ -1,14 +1,15 @@
-import React, { useState, useCallback } from 'react';
+import  { useState, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, Modal } from 'react-native';
 import { getDb } from '../baseDeDados/database';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
+import { useSearch } from '../Contexts/SearchContext';
 
 
 const EveryRecipe = () => {
   const [recipes, setRecipes] = useState([]);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-
+  const {searchQuery} = useSearch();
 
  
     const fetchRecipes = () => {
@@ -26,7 +27,10 @@ const EveryRecipe = () => {
                 ingredients
               };
             });
-            setRecipes(fetchedRecipes);          
+            const filteredRecipes = fetchedRecipes.filter(recipe =>
+              recipe.name.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            setRecipes(filteredRecipes);          
           },
           (tx, error) => {
             console.error('Erro ao buscar receitas', error);
@@ -38,7 +42,7 @@ const EveryRecipe = () => {
     useFocusEffect(
       useCallback(() => {
         fetchRecipes();
-      }, []) 
+      }, [searchQuery]) 
       );
   
 
@@ -78,7 +82,7 @@ const EveryRecipe = () => {
     // Render do cabeçalho
     const renderHeader = () => (
       <View style={styles.subHeader}>
-      <Text style={styles.title}>Todas as Receitas</Text>
+      <Text style={styles.title}>Receitas</Text>
       
     </View>
     );
