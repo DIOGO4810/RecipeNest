@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import BottomTabNavigator from './navegacao/Appnavigator';
 import { initializeDatabase } from './baseDeDados/database';  
 import { addInitialRecipes, addRecipe, deleteRecipe, clearRecipesTable, clearIngredientTable } from './baseDeDados/dataUtils';
 import { VeganProvider } from './Contexts/VeganContext';
+import { SearchProvider } from './Contexts/SearchContext';
 
 export default function App() {
   const [isDatabaseReady, setIsDatabaseReady] = useState(false);
@@ -30,7 +31,7 @@ export default function App() {
   }
 
   return (
-    
+    <SearchProvider>
      <VeganProvider>
      <NavigationContainer>
 
@@ -38,6 +39,7 @@ export default function App() {
 
      </NavigationContainer>
      </VeganProvider>
+     </SearchProvider>
    
   
 

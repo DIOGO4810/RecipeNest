@@ -1,10 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import  { useState, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, Modal } from 'react-native';
 import { checkIngredientsAvailability } from '../baseDeDados/dataUtils';
 import { getDb } from '../baseDeDados/database';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect} from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { useVegan } from '../Contexts/VeganContext';
+import { useSearch } from '../Contexts/SearchContext';
 
 const HomeScreen = () => {
   const [recipes, setRecipes] = useState([]);
@@ -12,8 +13,8 @@ const HomeScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [isTwoColumn, setIsTwoColumn] = useState(false);
   const { isVeganChecked } = useVegan();
-
-  const navigation = useNavigation();
+  const {searchQuery} = useSearch(); 
+  const [recypeCount,setRecipeCount] = useState(0);
  
   const fetchRecipes = async () => {
     try {
@@ -45,8 +46,11 @@ const HomeScreen = () => {
               return isAvailable ? recipe : null;
             }));
 
-            const filteredRecipes = validRecipes.filter(recipe => recipe !== null);
-
+            const filteredRecipesWithoutSearch = validRecipes.filter(recipe => recipe !== null);
+            const filteredRecipes = filteredRecipesWithoutSearch.filter(recipe =>
+              recipe.name.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            setRecipeCount(filteredRecipesWithoutSearch.length)
             setRecipes(filteredRecipes);
           },
           (tx, error) => {
@@ -61,7 +65,7 @@ const HomeScreen = () => {
   useFocusEffect(
     useCallback(() => {
       fetchRecipes();
-    }, [isVeganChecked]) // O filtro vegano é dependência da busca
+    }, [isVeganChecked,searchQuery]) // O filtro vegano é dependência da busca
     );
   
 
@@ -95,8 +99,9 @@ const HomeScreen = () => {
 
     // Render do cabeçalho
     const renderHeader = () => (
-      <View style={styles.subHeader}>
-      <Text style={styles.title}>Receitas</Text>
+      <View>
+        <View style={styles.subHeader}>
+      <Text style={styles.title}> Receitas </Text>
       <TouchableOpacity
         style={styles.columns}
         onPress={() => setIsTwoColumn(prev => !prev)}
@@ -107,8 +112,12 @@ const HomeScreen = () => {
           <Feather name="grid" size={24} color="black" />
         }
       </TouchableOpacity>
-   
+
     </View>
+      <Text style={styles.subTitle}>Disponiveis: {recypeCount}</Text>
+      
+      </View>
+      
   );
 
   return (
@@ -305,6 +314,11 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
 
   },
+  subTitle: {
+    fontSize: 18,
+    fontWeight:'500',
+    marginLeft:22
+  }
 
 });
 

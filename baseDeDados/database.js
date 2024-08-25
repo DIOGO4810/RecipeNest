@@ -26,6 +26,24 @@ export const initializeDatabase = () => {
           reject(error);
         }
       );
+      
+      // Cria a tabela de lista de compras
+      tx.executeSql(
+        `CREATE TABLE IF NOT EXISTS buylist (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT UNIQUE,
+          quantity TEXT,
+          unit TEXT
+        );`,
+        [],
+        () => {
+          console.log('Tabela buylist criada com sucesso.');
+        },
+        (tx, error) => {
+          console.error('Erro ao criar tabela buylist:', error);
+          reject(error);
+        }
+      );
 
       // Cria a tabela de receitas
       tx.executeSql(
