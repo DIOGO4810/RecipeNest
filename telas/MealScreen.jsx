@@ -2,30 +2,44 @@ import  { useState, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, Modal } from 'react-native';
 import { checkIngredientsAvailability } from '../baseDeDados/dataUtils';
 import { getDb } from '../baseDeDados/database';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect} from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
+import { useVegan } from '../Contexts/VeganContext';
+import { useSearch } from '../Contexts/SearchContext';
 import { useFocus } from '../Contexts/FocusContext';
 
-const BakeryScreen = ({navigation}) => {
+const MealSreen = ({navigation}) => {
+
+  
+
   const [recipes, setRecipes] = useState([]);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [isTwoColumn, setIsTwoColumn] = useState(false); // Estado para controlar o número de colunas
-  const [recypeCount,setRecypeCount] = useState(0);
-  const {setfocus}=useFocus();
-
+  const [isTwoColumn, setIsTwoColumn] = useState(false);
+  const { isVeganChecked } = useVegan();
+  const {setfocus}= useFocus();
+  const {searchQuery} = useSearch(); 
+  const [recypeCount,setRecipeCount] = useState(0);
+ 
   const fetchRecipes = async () => {
     try {
       const db = getDb();
 
       db.transaction(tx => {
+        let query = 'SELECT * FROM recipes WHERE category = ?';
+        let params = ['refeicao'];
+
+        if (isVeganChecked) {
+          query += ' AND isVegan = ?';
+          params.push(1); // 1 representa receitas vegetarianas
+        }
+
         tx.executeSql(
-          'SELECT * FROM recipes WHERE category = ?',
-          ['sobremesa'],
+          query,
+          params,
           async (_, { rows }) => {
             const recipes = rows._array.map(recipe => {
               const ingredients = JSON.parse(recipe.ingredients.replace(/\\"/g, '"').replace(/^"|"$/g, ''));
-              
               return {
                 ...recipe,
                 ingredients
@@ -37,10 +51,12 @@ const BakeryScreen = ({navigation}) => {
               return isAvailable ? recipe : null;
             }));
 
-            const filteredRecipes = validRecipes.filter(recipe => recipe !== null);
-
+            const filteredRecipesWithoutSearch = validRecipes.filter(recipe => recipe !== null);
+            const filteredRecipes = filteredRecipesWithoutSearch.filter(recipe =>
+              recipe.name.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            setRecipeCount(filteredRecipesWithoutSearch.length)
             setRecipes(filteredRecipes);
-            setRecypeCount(filteredRecipes.length);
           },
           (tx, error) => {
             console.error('Erro ao buscar receitas:', error);
@@ -51,13 +67,14 @@ const BakeryScreen = ({navigation}) => {
       console.error('Erro ao buscar receitas:', error);
     }
   };
-
   useFocusEffect(
     useCallback(() => {
       fetchRecipes();
-      setfocus('SobremesasDrawer');
-    }, [navigation])
-  );
+      setfocus('Meals');
+    }, [isVeganChecked,searchQuery,navigation]) // O filtro vegano é dependência da busca
+   
+    );
+  
 
   const openModal = (recipe) => {
     setSelectedRecipe(recipe);
@@ -71,8 +88,6 @@ const BakeryScreen = ({navigation}) => {
 
   // Calcula a largura dos itens com base no número de colunas
   const itemWidth = isTwoColumn ? 160: 300;
-  // Calcula a altura dos itens
-  const itemHeight = isTwoColumn ? 250 : 300; // Exemplo de altura com base no número de colunas
 
   const imageWidth = isTwoColumn ? 100 : 200;
 
@@ -107,16 +122,19 @@ const BakeryScreen = ({navigation}) => {
 
     </View>
       <Text style={styles.subTitle}>Disponiveis: {recypeCount}</Text>
+      
       </View>
-    );
-  
+      
+  );
 
   return (
     <View style={styles.container}>
     
      
       {recipes.length === 0 ? (
+        <View>
         <Text>Nenhuma receita disponível.</Text>
+        </View>
       ) : (
         <FlatList
           ListHeaderComponent={renderHeader}
@@ -129,27 +147,27 @@ const BakeryScreen = ({navigation}) => {
         />
       )}
 
-      {selectedRecipe && (
-        <Modal
-          visible={modalVisible}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={closeModal}
-        >
-          {/* Fundo com opacidade fixa */}
-          <TouchableOpacity style={styles.modalBackground} onPress={closeModal}>
-            <View style={styles.modalBackground} />
-          </TouchableOpacity>
-          
-          <View style={styles.modalContent}>
-            <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
-              <Text style={styles.closeButtonText}>✕</Text>
-            </TouchableOpacity>
-            <Image source={selectedRecipe.image} style={styles.modalRecipeImage} />
+   {selectedRecipe && (
+    <Modal
+    visible={modalVisible}
+    transparent={true}
+    animationType="slide"
+    onRequestClose={closeModal}
+    >
+    {/* Fundo com opacidade fixa */}
+    <TouchableOpacity style={styles.modalBackground} onPress={closeModal}>
+      <View style={styles.modalBackground} />
+    </TouchableOpacity>
+    
+    <View style={styles.modalContent}>
+      <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
+        <Text style={styles.closeButtonText}>✕</Text>
+      </TouchableOpacity>
+      <Image source={selectedRecipe.image} style={styles.modalRecipeImage} />
 
-            <Text style={styles.modalRecipeName}>{selectedRecipe.name}</Text>
+      <Text style={styles.modalRecipeName}>{selectedRecipe.name}</Text>
 
-            <Text style={styles.Mtitle}>Tempo de Preparação: {selectedRecipe.preparation_time} minutos {'\n'}</Text>
+      <Text style={styles.Mtitle}>Tempo de Preparação: {selectedRecipe.preparation_time} minutos {'\n'}</Text>
       <Text style={[styles.biggerLtext,{marginBottom:10}]}>{selectedRecipe.description}</Text>
 
       {/* Alinhar Ingredientes e Valores Nutricionais em paralelo */}
@@ -171,13 +189,14 @@ const BakeryScreen = ({navigation}) => {
         </View>
       </View>
     </View>
-        </Modal>
-      )}
+  </Modal>
+)}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  
   container: {
     flex: 1,
     justifyContent: 'flex-start',
@@ -195,17 +214,12 @@ const styles = StyleSheet.create({
     width: '100%', // Garante que o container ocupe toda a largura disponível
     paddingHorizontal: 10, // Adiciona algum preenchimento horizontal para que o conteúdo não fique colado às bordas
     marginBottom:10
+
   },
   columns:{
     alignSelf:'flex-end',
     
     marginLeft:180,
-  },
-  bbiggerStext: {
-    fontSize: 16,
-    alignSelf:'flex-start',
-    
-
   },
   ingredientsContainer: {
     flexDirection: 'row',
@@ -221,28 +235,18 @@ const styles = StyleSheet.create({
   
     
   },
-  Stitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    margin: 20,
-  },Mtitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    alignSelf: 'flex-start',
-    
-  },
+
   flatListContent: {
     justifyContent: 'center',
     alignItems: 'center',
   },
   recipeItem: {
-    margin: 10,
-    padding: 20,
+    margin:10,
+    padding: 10,
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 10,
-    width: 300,
-    backgroundColor: '#ffccd4', // Cor de fundo da receita
+    backgroundColor: '#ffdb99', // Cor de fundo da receita
     alignItems: 'center',
   },
   recipeName: {
@@ -252,7 +256,7 @@ const styles = StyleSheet.create({
   },
   recipeImage: {
     borderRadius: 20,
-    marginBottom: 10,
+    marginVertical: 10,
   },
   modalBackground: {
     position: 'absolute',
@@ -267,7 +271,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    backgroundColor: '#ffe6e9', // Cor de fundo do model da receita que normalmente um bocado mais claro que o da receita em si
+    backgroundColor: '#fff8dc', // Cor de fundo do modal da receita
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
@@ -298,19 +302,26 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   biggerLtext: {
-    fontSize:18 
-   },
-
-   biggerMtext:{
-    fontSize:18,
-    alignSelf: 'flex-start',  // Alinha o texto à esquerda
-    marginTop: 10,
-   },
-   biggerStext:{
-    fontSize:16,
+    fontSize: 18,
     alignSelf:'flex-start'
-   },
-   subTitle: {
+  },
+  biggerStext: {
+    fontSize: 16,
+    alignSelf:'flex-start'
+
+  }, bbiggerStext: {
+    fontSize: 16,
+    alignSelf:'flex-start',
+    
+
+  },
+  Mtitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    alignSelf: 'flex-start',
+
+  },
+  subTitle: {
     fontSize: 18,
     fontWeight:'500',
     marginLeft:22
@@ -318,4 +329,4 @@ const styles = StyleSheet.create({
 
 });
 
-export default BakeryScreen;
+export default MealSreen;
