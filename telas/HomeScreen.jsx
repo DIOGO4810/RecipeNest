@@ -1,5 +1,5 @@
 import {useCallback, useState} from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity,Image , } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity,Image } from 'react-native';
 import { useNavigation , useFocusEffect} from '@react-navigation/native';
 import { useFocus } from '../Contexts/FocusContext';
 import cookimage from '../assets/images/2149028622.jpg';
@@ -76,7 +76,7 @@ const HomeScreen = () => {
       </View>
         <Text style={styles.Title}> Explicação brévia da app</Text>
       <Text style={styles.Description}>
-        Explore uma ampla variedade de receitas, desde pratos principais até sobremesas.{'\n\n'}
+        Explore uma ampla variedade de receitas, desde pratos principais até sobremesas aonde ao clickar nas mesmas conseguirá ver informações sobre as mesmas.{'\n\n'}
         Armazene os ingredientes que você tem em casa e descubra quais receitas pode preparar com eles.{'\n\n'}
         Mantenha uma lista de compras atualizada para não esquecer de nenhum ingrediente essencial.
       </Text>

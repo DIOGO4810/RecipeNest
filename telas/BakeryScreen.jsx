@@ -3,8 +3,10 @@ import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, Modal } from
 import { checkIngredientsAvailability } from '../baseDeDados/dataUtils';
 import { getDb } from '../baseDeDados/database';
 import { useFocusEffect } from '@react-navigation/native';
-import { Feather } from '@expo/vector-icons';
+import { Feather,MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocus } from '../Contexts/FocusContext';
+import { useVegan } from '../Contexts/VeganContext';
+import { useSearch } from '../Contexts/SearchContext';
 
 const BakeryScreen = ({navigation}) => {
   const [recipes, setRecipes] = useState([]);
@@ -13,34 +15,49 @@ const BakeryScreen = ({navigation}) => {
   const [isTwoColumn, setIsTwoColumn] = useState(false); // Estado para controlar o número de colunas
   const [recypeCount,setRecypeCount] = useState(0);
   const {setfocus}=useFocus();
+  const { searchQuery } = useSearch();
+  const {isVeganChecked,setIsVeganChecked} = useVegan();
 
   const fetchRecipes = async () => {
     try {
       const db = getDb();
 
-      db.transaction(tx => {
+      db.transaction((tx) => {
+        let query = 'SELECT * FROM recipes WHERE category = ?';
+        let params = ['sobremesa'];
+
+        if (isVeganChecked) {
+          query += ' AND isVegan = ?';
+          params.push(1); // 1 representa receitas vegetarianas
+        }
+
         tx.executeSql(
-          'SELECT * FROM recipes WHERE category = ?',
-          ['sobremesa'],
+          query,
+          params,
           async (_, { rows }) => {
-            const recipes = rows._array.map(recipe => {
-              const ingredients = JSON.parse(recipe.ingredients.replace(/\\"/g, '"').replace(/^"|"$/g, ''));
-              
+            const recipes = rows._array.map((recipe) => {
+              const ingredients = JSON.parse(
+                recipe.ingredients.replace(/\\"/g, '"').replace(/^"|"$/g, '')
+              );
               return {
                 ...recipe,
-                ingredients
+                ingredients,
               };
             });
 
-            const validRecipes = await Promise.all(recipes.map(async (recipe) => {
-              const isAvailable = await checkIngredientsAvailability(recipe.id);
-              return isAvailable ? recipe : null;
-            }));
+            const validRecipes = await Promise.all(
+              recipes.map(async (recipe) => {
+                const isAvailable = await checkIngredientsAvailability(recipe.id);
+                return isAvailable ? recipe : null;
+              })
+            );
 
-            const filteredRecipes = validRecipes.filter(recipe => recipe !== null);
-
+            const filteredRecipesWithoutSearch = validRecipes.filter((recipe) => recipe !== null);
+            const filteredRecipes = filteredRecipesWithoutSearch.filter((recipe) =>
+              recipe.name.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            setRecypeCount(filteredRecipesWithoutSearch.length);
             setRecipes(filteredRecipes);
-            setRecypeCount(filteredRecipes.length);
           },
           (tx, error) => {
             console.error('Erro ao buscar receitas:', error);
@@ -51,12 +68,11 @@ const BakeryScreen = ({navigation}) => {
       console.error('Erro ao buscar receitas:', error);
     }
   };
-
   useFocusEffect(
     useCallback(() => {
       fetchRecipes();
       setfocus('SobremesasDrawer');
-    }, [navigation])
+    }, [navigation,isVeganChecked,searchQuery])
   );
 
   const openModal = (recipe) => {
@@ -68,12 +84,29 @@ const BakeryScreen = ({navigation}) => {
     setModalVisible(false);
   };
 
+  const handleVeganCheck = () => {
+    setIsVeganChecked((prevState) => !prevState);
+  };
+
+  const Custom = ({ label, isChecked, onCheck }) => {
+    return (
+      <TouchableOpacity style={styles.checkboxContainer} onPress={onCheck}>
+        {/* Círculo externo */}
+        <View style={styles.outerCircle}>
+          {/* Círculo interno */}
+          <View style={styles.innerCircle}>
+            {/* Círculo preenchido (aparece apenas se estiver selecionado) */}
+            {isChecked && <View style={styles.filledCircle} />}
+          </View>
+        </View>
+        <Text style={styles.label}>{label}</Text>
+      </TouchableOpacity>
+    );
+  };
 
   // Calcula a largura dos itens com base no número de colunas
   const itemWidth = isTwoColumn ? 160: 300;
-  // Calcula a altura dos itens
-  const itemHeight = isTwoColumn ? 250 : 300; // Exemplo de altura com base no número de colunas
-
+  
   const imageWidth = isTwoColumn ? 100 : 200;
 
   const imageHeight = isTwoColumn ? 100 : 200;
@@ -93,37 +126,54 @@ const BakeryScreen = ({navigation}) => {
     const renderHeader = () => (
       <View>
         <View style={styles.subHeader}>
-      <Text style={styles.title}> Receitas </Text>
-      <TouchableOpacity
-        style={styles.columns}
-        onPress={() => setIsTwoColumn(prev => !prev)}
-        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-      >
-        {isTwoColumn ? 
-          <Feather name="square" size={24} color="black" /> :
-          <Feather name="grid" size={24} color="black" />
-        }
-      </TouchableOpacity>
-
-    </View>
-      <Text style={styles.subTitle}>Disponiveis: {recypeCount}</Text>
+          <Text style={[styles.title, { marginBottom: 5 }]}> Sobremesas </Text>
+          <Custom label="Vegan" isChecked={isVeganChecked} onCheck={handleVeganCheck} />
+        </View>
+  
+        <View style={styles.headerRow}>
+          <Text style={[styles.subTitle, { marginTop: 5 }]}>Disponiveis: {recypeCount}</Text>
+  
+          <TouchableOpacity
+            style={{ marginBottom: 10, marginRight: 15 }}
+            onPress={() => setIsTwoColumn((prev) => !prev)}
+            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+          >
+            {isTwoColumn ? (
+              <MaterialCommunityIcons name="table-column" size={28} color="black" />
+            ) : (
+              <Feather name="grid" size={28} color="black" />
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
     );
-  
+
+    // Novo componente de mensagem sem receitas disponíveis
+  const renderNoRecipes = () => (
+    <View style={styles.noRecipesContainer}>
+      <MaterialCommunityIcons name="emoticon-sad-outline" size={50} color="#555" />
+      <Text style={styles.noRecipesText}>
+        Nenhuma receita disponível. Para ver receitas, adicione ingredientes na página de ingredientes!
+      </Text>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
     
      
       {recipes.length === 0 ? (
-        <Text>Nenhuma receita disponível.</Text>
+        <View>
+          {renderHeader()}
+          {renderNoRecipes()}
+        </View>
       ) : (
         <FlatList
           ListHeaderComponent={renderHeader}
-          key={isTwoColumn ? 'two' : 'one'}  // Alterar a key para forçar a nova renderização
+          key={isTwoColumn ? 'two' : 'one'} // Alterar a key para forçar a nova renderização
           numColumns={isTwoColumn ? 2 : 1}
           data={recipes}
-          keyExtractor={item => item.id.toString()}
+          keyExtractor={(item) => item.id.toString()}
           renderItem={renderItem}
           contentContainerStyle={styles.flatListContent}
         />
@@ -190,6 +240,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft:5
   },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 10,
+  },
   subHeader:{
     flexDirection:'row',
     width: '100%', // Garante que o container ocupe toda a largura disponível
@@ -206,6 +262,40 @@ const styles = StyleSheet.create({
     alignSelf:'flex-start',
     
 
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    marginLeft: 105,
+    marginTop: 6,
+  },
+  outerCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12, // Metade da largura/altura para um círculo perfeito
+    borderWidth: 2,
+    borderColor: '#009900', // Cor do anel externo
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+
+  },
+  innerCircle: {
+    width: 18, // Menor que o círculo externo
+    height: 18, // Menor que o círculo externo
+    borderRadius: 9, // Metade da largura/altura para um círculo perfeito
+    backgroundColor: 'white', // Cor do fundo interno
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filledCircle: {
+    width: 10, // Menor que o círculo interno
+    height: 10, // Menor que o círculo interno
+    borderRadius: 5, // Metade da largura/altura para um círculo perfeito
+    backgroundColor: '#009900', // Cor do círculo preenchido
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   ingredientsContainer: {
     flexDirection: 'row',
@@ -313,9 +403,20 @@ const styles = StyleSheet.create({
    subTitle: {
     fontSize: 18,
     fontWeight:'500',
-    marginLeft:22
-  }
-
+    marginLeft:14
+  },
+  noRecipesContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  noRecipesText: {
+    fontSize: 16,
+    color: '#555',
+    textAlign: 'center',
+    marginTop: 10,
+    paddingHorizontal: 20,
+  },
 });
 
 export default BakeryScreen;
