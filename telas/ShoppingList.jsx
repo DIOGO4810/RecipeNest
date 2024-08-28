@@ -286,6 +286,13 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: '#ffc96f',
     padding: 10,
+    shadowColor: '#000',    // Shadow color (black)
+    shadowOffset: { width: 0, height: 5 }, // Offset the shadow to create a depth effect
+    shadowOpacity: 0.3,     // Shadow transparency (0.3 = 30% opaque)
+    shadowRadius: 6.5,        // How blurry the shadow is
+    
+    // Elevation property for Android
+    elevation: 10,    
   },
   detailsContainer: {
     flex: 1,
