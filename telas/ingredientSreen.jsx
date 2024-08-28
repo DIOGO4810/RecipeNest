@@ -2,21 +2,23 @@ import  { useState, useCallback } from 'react';
 import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity, KeyboardAvoidingView,Pressable, Platform ,Alert} from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-
+import { useFocus } from '../Contexts/FocusContext';
 import { getDb } from '../baseDeDados/database';
 import ingredientImages from '../imageMapping';
 
-const AvailableIngredientsScreen = () => {
+const AvailableIngredientsScreen = ({navigation}) => {
   const [ingredientName, setIngredientName] = useState('');
   const [quantity, setQuantity] = useState(null);
   const [unit, setUnit] = useState(null);
+  const {setfocus}= useFocus();
   const [ingredients, setIngredients] = useState([]);
   const db = getDb();
 
   useFocusEffect(
     useCallback(() => {
       loadIngredients();
-    }, [])
+      setfocus('IngredientesDrawer');
+    }, [navigation])
   );
 
   const loadIngredients = () => {

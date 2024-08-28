@@ -1,21 +1,26 @@
-import  { useState, useCallback, useRef } from 'react';
-import { Text, TouchableOpacity, View, TextInput, Keyboard ,Switch} from 'react-native';
+import React, { useState, useCallback, useRef } from 'react';
+import { Text, TouchableOpacity, View, TextInput, Switch } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
-import HomeScreen from '../telas/HomeScreen';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import MealScreen from '../telas/MealScreen';
 import BakeryScreen from '../telas/BakeryScreen';
-import ingredientScreen from '../telas/ingredientSreen';
+import IngredientScreen from '../telas/ingredientSreen';
 import SettingsScreen from '../telas/SettingsScreen';
 import EveryRecipe from '../telas/EveryRecipe';
 import ShoppingList from '../telas/ShoppingList';
+import HomeScreen from '../telas/HomeScreen';
 import { useVegan } from '../Contexts/VeganContext';
 import { useSearch } from '../Contexts/SearchContext';
-import { Feather,Ionicons,MaterialCommunityIcons } from '@expo/vector-icons';
+import { useFocus } from '../Contexts/FocusContext';
+import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 const Drawer = createDrawerNavigator();
 const Tab = createBottomTabNavigator();
+const HomeStack = createNativeStackNavigator();
 
+// Custom Drawer Content
 function CustomDrawerContent(props) {
   const { isVeganChecked, setIsVeganChecked } = useVegan();
 
@@ -25,10 +30,7 @@ function CustomDrawerContent(props) {
 
   return (
     <DrawerContentScrollView {...props}>
-      {/* Drawer Items */}
       <DrawerItemList {...props} />
-      
-      {/* Vegan Toggle Switch */}
       <View style={{ marginLeft: 20, flexDirection: 'row', alignItems: 'center' }}>
         <Text style={{ fontSize: 14, fontWeight: '500', color: '#6c6c6c' }}>Receitas Vegetarianas</Text>
         <Switch
@@ -43,43 +45,37 @@ function CustomDrawerContent(props) {
   );
 }
 
+// Drawer Navigator
 function DrawerNavigator() {
   const { searchQuery, setSearchQuery } = useSearch();
   const [isSearchBarExpanded, setIsSearchBarExpanded] = useState(false);
+  const {focus,setfocus} = useFocus();
+
   const inputRef = useRef(null);
   const navigation = useNavigation();
 
   const handleSearchIconPress = () => {
     setIsSearchBarExpanded(true);
     setTimeout(() => {
-      
-        console.log("Attempting to focus the TextInput...");
-        inputRef.current.focus();
-        console.log("TextInput focused:", inputRef.current.isFocused());
-      
-    }, 100); // Atraso para garantir que o componente esteja renderizado
+      inputRef.current.focus();
+    }, 100);
   };
-  
-  
 
   const handleClearSearch = () => {
     setSearchQuery('');
     setIsSearchBarExpanded(false);
-    console.log("TextInput focused:", inputRef.current.isFocused());
   };
 
   useFocusEffect(
     useCallback(() => {
       const onBlur = () => {
-        if (isSearchBarExpanded ) {
+        if (isSearchBarExpanded) {
           setSearchQuery('');
           setIsSearchBarExpanded(false);
         }
       };
 
       const unsubscribe = navigation.addListener('state', onBlur);
-      console.log({isSearchBarExpanded});
-      console.log({inputRef});
 
       return unsubscribe;
     }, [isSearchBarExpanded, navigation, setSearchQuery])
@@ -147,64 +143,129 @@ function DrawerNavigator() {
       })}
     >
       <Drawer.Screen
-        name="HomeStack"
+        name="HomeDrawer"
         component={HomeScreen}
-        options={{ drawerLabel: 'Início' }}
-        
+        options={{
+          drawerLabel: 'Início',
+          listeners: {
+            focus: () => setfocus('Home')
+          }
+        }}
+      />
+      <Drawer.Screen
+      name="Meals"
+      component={MealScreen}
+      options={{
+      drawerLabel: 'Refeições',
+       headerTitle: 'Refeições',
+       }}
+/>
+
+      <Drawer.Screen
+        name="SobremesasDrawer"
+        component={BakeryScreen}
+        options={{
+          drawerLabel: 'Sobremesas',
+          headerTitle: 'Sobremesas',
+          listeners: {
+            focus: () => setfocus('SobremesasDrawer')
+          }
+        }}
+      />
+      <Drawer.Screen
+        name="IngredientesDrawer"
+        component={IngredientScreen}
+        options={{
+          drawerLabel: 'Ingredientes',
+          headerTitle: 'Ingredientes',
+          listeners: {
+            focus: () => setfocus('IngredientesDrawer')
+          }
+        }}
       />
       <Drawer.Screen
         name="Todas_Receitas"
         component={EveryRecipe}
-        options={{ drawerLabel: 'Todas as Receitas',headerTitle:'Todas as Receitas' }}
+        options={{
+          drawerLabel: 'Todas as Receitas',
+          headerTitle: 'Todas as Receitas',
+          listeners: {
+            focus: () => setfocus('Todas_Receitas')
+          }
+        }}
       />
       <Drawer.Screen
         name="Lista_de_compras"
         component={ShoppingList}
-        options={{ drawerLabel: 'Lista de compras' ,headerTitle:'Lista de compras'}}
-        
+        options={{
+          drawerLabel: 'Lista de compras',
+          headerTitle: 'Lista de compras',
+          listeners: {
+            focus: () => setfocus('Lista_de_compras')
+          }
+        }}
       />
       <Drawer.Screen
         name="Settings"
         component={SettingsScreen}
-        options={{ drawerLabel: 'Configurações',headerTitle:'Settings' }}
+        options={{
+          drawerLabel: 'Configurações',
+          headerTitle: 'Settings',
+          listeners: {
+            focus: () => setfocus('Settings')
+          }
+        }}
       />
     </Drawer.Navigator>
   );
 }
 
+// Bottom Tab Navigator
 function BottomTabNavigator() {
+  const {focus,setfocus} = useFocus();
+  const navigation = useNavigation(); // useNavigation hook to navigate to drawer screens
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, size }) => {
+        tabBarIcon: ({ color, size }) => {
           let iconName;
-          let iconColor = 'gray';
+          const isFocused = focus == route.name; // Verifique se a aba está focada
+          console.log({isFocused});
+          console.log({focus});
+          console.log(`Rendering icon for route: ${route.name}`); // Log route.name
 
-          if (route.name === 'Refeições') {
-            iconName = focused ? 'fast-food' : 'fast-food-outline';
-            iconColor = focused ? '#ffe680' : 'gray';
-            return <Ionicons name={iconName} size={size} color={iconColor} />;
+          if (route.name === 'Home') {
+            iconName = isFocused ? 'home' : 'home-outline';
+            color = 'gray'
+            return <Ionicons name={iconName} size={size} color={color} />;
+          } else if (route.name === 'Refeições') {
+            iconName = focus == 'Meals' ? 'fast-food' : 'fast-food-outline';
+            color = focus == 'Meals' ? '#ffe680' : 'gray';
+            return <Ionicons name={iconName} size={size} color={color} />;
           } else if (route.name === 'Sobremesas') {
-            iconName = focused ? 'cake-variant' : 'cake-variant-outline';
-            iconColor = focused ? '#ffb6c1' : 'gray';
-            return <MaterialCommunityIcons name={iconName} size={size} color={iconColor} />;
+            iconName = focus == 'SobremesasDrawer' ? 'cake-variant' : 'cake-variant-outline';
+            color = focus == 'SobremesasDrawer' ? '#ffb6c1' : 'gray';
+            return <MaterialCommunityIcons name={iconName} size={size} color={color} />;
           } else if (route.name === 'Ingredientes') {
-            iconName = focused ? 'cart' : 'cart-outline';
-            iconColor = focused ? '#33ffbb' : 'gray';
-            return <Ionicons name={iconName} size={size} color={iconColor} />;
+            iconName = focus == 'IngredientesDrawer' ? 'cart' : 'cart-outline';
+            color = focus == 'IngredientesDrawer' ? '#33ffbb' : 'gray';
+            return <Ionicons name={iconName} size={size} color={color} />;
           }
 
           return null;
         },
         tabBarLabel: ({ focused }) => {
-          let labelColor = 'gray';
+          let labelColor = focused ? 'black' : 'gray';
 
-          if (route.name === 'Refeições') {
-            labelColor = focused ? '#ffd633' : 'gray';
+          if (route.name === 'Home') {
+            labelColor = 'black';
+          } else if (route.name === 'Refeições') {
+            labelColor = focus == 'Meals' ? '#ffd633' : 'gray';
           } else if (route.name === 'Sobremesas') {
-            labelColor = focused ? '#ff99a8' : 'gray';
+            labelColor = focus == 'SobremesasDrawer' ? '#ff99a8' : 'gray';
           } else if (route.name === 'Ingredientes') {
-            labelColor = focused ? '#00ffaa' : 'gray';
+            labelColor = focus == 'IngredientesDrawer' ? '#00ffaa' : 'gray';
           }
 
           return (
@@ -213,18 +274,60 @@ function BottomTabNavigator() {
             </Text>
           );
         },
-        tabBarInactiveTintColor: 'gray',
+        tabBarActiveTintColor: '#00ffaa', // Define a cor ativa de forma global
+        tabBarInactiveTintColor: 'gray',   // Define a cor inativa de forma global
       })}
     >
-      <Tab.Screen name="Refeições" component={DrawerNavigator} options={{ headerShown: false }}
+      <Tab.Screen 
+        name="Home" 
+        component={DrawerNavigator} 
         listeners={({ navigation }) => ({
           tabPress: (e) => {
             e.preventDefault();
-            navigation.navigate('HomeStack'); // Always navigate to "Início" screen of DrawerNavigator
+            setfocus('Home');
+            navigation.navigate('HomeDrawer'); // Navega para a tela 'Home' do Drawer
           },
-        })} />
-      <Tab.Screen name="Ingredientes" component={ingredientScreen} />
-      <Tab.Screen name="Sobremesas" component={BakeryScreen} />
+        })}
+        options={{ headerShown: false }}
+      />
+      <Tab.Screen 
+        name="Refeições" 
+        component={DrawerNavigator} 
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            e.preventDefault();
+            setfocus('Meals');
+            navigation.navigate('Meals'); // Navega para a tela 'Meals' do Drawer
+          },
+        })}
+        options={{ headerShown: false }}
+      />
+
+      <Tab.Screen 
+        name="Sobremesas" 
+        component={DrawerNavigator} 
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            e.preventDefault();
+            setfocus('SobremesasDrawer');
+            navigation.navigate('SobremesasDrawer'); // Navega para a tela 'Sobremesas' do Drawer
+          },
+        })}
+        options={{ headerShown: false }}
+      />
+
+      <Tab.Screen 
+        name="Ingredientes" 
+        component={DrawerNavigator} 
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            e.preventDefault();
+            setfocus('IngredientesDrawer');
+            navigation.navigate('IngredientesDrawer'); // Navega para a tela 'Ingredientes' do Drawer
+          },
+        })}
+        options={{ headerShown: false }}
+      />
     </Tab.Navigator>
   );
 }

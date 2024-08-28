@@ -5,6 +5,7 @@ import { initializeDatabase } from './baseDeDados/database';
 import { addInitialRecipes, addRecipe, deleteRecipe, clearRecipesTable, clearIngredientTable } from './baseDeDados/dataUtils';
 import { VeganProvider } from './Contexts/VeganContext';
 import { SearchProvider } from './Contexts/SearchContext';
+import { FocusProvider } from './Contexts/FocusContext';
 
 export default function App() {
   const [isDatabaseReady, setIsDatabaseReady] = useState(false);
@@ -31,15 +32,20 @@ export default function App() {
   }
 
   return (
-    <SearchProvider>
-     <VeganProvider>
+    <FocusProvider>
+      <SearchProvider>
+    <VeganProvider>
      <NavigationContainer>
 
         <BottomTabNavigator /> 
 
      </NavigationContainer>
-     </VeganProvider>
-     </SearchProvider>
+    </VeganProvider>
+    </SearchProvider> 
+    </FocusProvider>
+   
+   
+    
    
   
 
