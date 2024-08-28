@@ -1,11 +1,10 @@
 import  { useState, useCallback } from 'react';
 import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity, KeyboardAvoidingView,Pressable, Platform ,Alert} from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/Ionicons';
-
+import { useFocusEffect,useNavigation } from '@react-navigation/native';
+import { useFocus } from '../Contexts/FocusContext';
 import { getDb } from '../baseDeDados/database';
 import ingredientImages from '../imageMapping';
-import { Feather,FontAwesome5 } from '@expo/vector-icons';
+import { Feather,FontAwesome5,Ionicons } from '@expo/vector-icons';
 
 const ShoppingList = () => {
   const [ingredientName, setIngredientName] = useState('');
@@ -13,11 +12,17 @@ const ShoppingList = () => {
   const [unit, setUnit] = useState(null);
   const [ingredients, setIngredients] = useState([]);
   const db = getDb();
+  const navigation = useNavigation();
+  const { setfocus } = useFocus(); // Use o contexto de foco
+
+
 
   useFocusEffect(
     useCallback(() => {
       loadIngredients();
-    }, [])
+      setfocus('Home');
+
+    }, [navigation])
   );
 
   const loadIngredients = () => {
@@ -156,7 +161,7 @@ const ShoppingList = () => {
           <FontAwesome5 name="check" size={24} color="#4dff4d" />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => removeIngredient(item.id)} style={styles.removeButton}>
-          <Icon name="trash-outline" size={24} color="#db8a8a" />
+          <Ionicons name="trash-outline" size={24} color="#db8a8a" />
           </TouchableOpacity>
           </View>
           <TextInput

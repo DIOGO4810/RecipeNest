@@ -1,8 +1,7 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { Text, TouchableOpacity, View, TextInput, Switch } from 'react-native';
+import { useState, useCallback, useRef } from 'react';
+import { Text, TouchableOpacity, View, TextInput } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList,DrawerItem } from '@react-navigation/drawer';
 import MealScreen from '../telas/MealScreen';
 import BakeryScreen from '../telas/BakeryScreen';
 import IngredientScreen from '../telas/ingredientSreen';
@@ -10,7 +9,7 @@ import SettingsScreen from '../telas/SettingsScreen';
 import EveryRecipe from '../telas/EveryRecipe';
 import ShoppingList from '../telas/ShoppingList';
 import HomeScreen from '../telas/HomeScreen';
-import { useVegan } from '../Contexts/VeganContext';
+import HelpScreen from '../telas/HelpSreen';
 import { useSearch } from '../Contexts/SearchContext';
 import { useFocus } from '../Contexts/FocusContext';
 import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -18,29 +17,27 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 const Drawer = createDrawerNavigator();
 const Tab = createBottomTabNavigator();
-const HomeStack = createNativeStackNavigator();
 
 // Custom Drawer Content
 function CustomDrawerContent(props) {
-  const { isVeganChecked, setIsVeganChecked } = useVegan();
-
-  const handleVeganToggleSwitch = () => {
-    setIsVeganChecked(prevState => !prevState);
-  };
+  // Verifica se a rota atual está focada
+  const isHelpFocused = props.state.routeNames[props.state.index] === 'Help';
 
   return (
-    <DrawerContentScrollView {...props}>
-      <DrawerItemList {...props} />
-      <View style={{ marginLeft: 20, flexDirection: 'row', alignItems: 'center' }}>
-        <Text style={{ fontSize: 14, fontWeight: '500', color: '#6c6c6c' }}>Receitas Vegetarianas</Text>
-        <Switch
-          value={isVeganChecked}
-          onValueChange={handleVeganToggleSwitch}
-          style={{ marginLeft: 10 }}
-          thumbColor={isVeganChecked ? '#59b300' : '#e6ffcc'}
-          trackColor={{ false: '#d9ffb3', true: '#408000' }}
-        />
+    <DrawerContentScrollView {...props} contentContainerStyle={{ flex: 1, justifyContent: 'space-between' }}>
+      {/* Drawer items go here */}
+      <View>
+        <DrawerItemList {...props} />
       </View>
+
+      {/* Custom item at the bottom using DrawerItem */}
+      <DrawerItem
+        label="Help"
+        icon={() => <Feather name="help-circle" size={20} color='black' />}
+        onPress={() => props.navigation.navigate('Help')}
+        focused={isHelpFocused} // Esta linha adiciona o foco ao item Help quando está selecionado
+        style={{ marginBottom: 10 }}
+      />
     </DrawerContentScrollView>
   );
 }
@@ -49,7 +46,6 @@ function CustomDrawerContent(props) {
 function DrawerNavigator() {
   const { searchQuery, setSearchQuery } = useSearch();
   const [isSearchBarExpanded, setIsSearchBarExpanded] = useState(false);
-  const {focus,setfocus} = useFocus();
 
   const inputRef = useRef(null);
   const navigation = useNavigation();
@@ -147,9 +143,7 @@ function DrawerNavigator() {
         component={HomeScreen}
         options={{
           drawerLabel: 'Início',
-          listeners: {
-            focus: () => setfocus('Home')
-          }
+          
         }}
       />
       <Drawer.Screen
@@ -167,9 +161,7 @@ function DrawerNavigator() {
         options={{
           drawerLabel: 'Sobremesas',
           headerTitle: 'Sobremesas',
-          listeners: {
-            focus: () => setfocus('SobremesasDrawer')
-          }
+          
         }}
       />
       <Drawer.Screen
@@ -178,9 +170,7 @@ function DrawerNavigator() {
         options={{
           drawerLabel: 'Ingredientes',
           headerTitle: 'Ingredientes',
-          listeners: {
-            focus: () => setfocus('IngredientesDrawer')
-          }
+          
         }}
       />
       <Drawer.Screen
@@ -189,9 +179,7 @@ function DrawerNavigator() {
         options={{
           drawerLabel: 'Todas as Receitas',
           headerTitle: 'Todas as Receitas',
-          listeners: {
-            focus: () => setfocus('Todas_Receitas')
-          }
+          
         }}
       />
       <Drawer.Screen
@@ -200,9 +188,7 @@ function DrawerNavigator() {
         options={{
           drawerLabel: 'Lista de compras',
           headerTitle: 'Lista de compras',
-          listeners: {
-            focus: () => setfocus('Lista_de_compras')
-          }
+         
         }}
       />
       <Drawer.Screen
@@ -211,9 +197,16 @@ function DrawerNavigator() {
         options={{
           drawerLabel: 'Configurações',
           headerTitle: 'Settings',
-          listeners: {
-            focus: () => setfocus('Settings')
-          }
+        
+        }}
+      />
+        <Drawer.Screen
+        name="Help"
+        component={HelpScreen}
+        options={{
+          drawerLabel: 'Help',
+          headerTitle: 'Help',
+          drawerItemStyle: { height: 0 }, // Hide it from the default list
         }}
       />
     </Drawer.Navigator>
@@ -231,9 +224,9 @@ function BottomTabNavigator() {
         tabBarIcon: ({ color, size }) => {
           let iconName;
           const isFocused = focus == route.name; // Verifique se a aba está focada
-          console.log({isFocused});
-          console.log({focus});
-          console.log(`Rendering icon for route: ${route.name}`); // Log route.name
+         // console.log({isFocused});
+         // console.log({focus});
+         // console.log(`Rendering icon for route: ${route.name}`); // Log route.name
 
           if (route.name === 'Home') {
             iconName = isFocused ? 'home' : 'home-outline';

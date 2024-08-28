@@ -1,15 +1,17 @@
 import  { useState, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, Modal } from 'react-native';
 import { getDb } from '../baseDeDados/database';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect,useNavigation } from '@react-navigation/native';
 import { useSearch } from '../Contexts/SearchContext';
-
+import { useFocus } from '../Contexts/FocusContext';
 
 const EveryRecipe = () => {
   const [recipes, setRecipes] = useState([]);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const {searchQuery} = useSearch();
+  const {setfocus} = useFocus();
+  const navigation = useNavigation();
 
  
     const fetchRecipes = () => {
@@ -42,7 +44,8 @@ const EveryRecipe = () => {
     useFocusEffect(
       useCallback(() => {
         fetchRecipes();
-      }, [searchQuery]) 
+        setfocus('Home')
+      }, [searchQuery,navigation]) 
       );
   
 

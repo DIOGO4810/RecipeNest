@@ -1,5 +1,5 @@
 import {useCallback, useState} from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity,Image , } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity,Image } from 'react-native';
 import { useNavigation , useFocusEffect} from '@react-navigation/native';
 import { useFocus } from '../Contexts/FocusContext';
 import cookimage from '../assets/images/home.jpg';
@@ -77,6 +77,7 @@ const HomeScreen = () => {
           <Text style={styles.gridText}>Configurações</Text>
         </TouchableOpacity>
       </View>
+
       <View style={styles.textContainer}>
         <Text style={styles.Title}> Utilizar a app</Text>
         <Text style={styles.Description}>
@@ -85,6 +86,7 @@ const HomeScreen = () => {
        {'\t\t'}✓{'\t\t'}Mantenha uma lista de compras atualizada para não esquecer de nenhum ingrediente essencial.
         </Text>
       </View>
+
     </ScrollView>
   );
 };

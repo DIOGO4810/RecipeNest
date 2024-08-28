@@ -1,6 +1,28 @@
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { useCallback } from 'react';
+import { useFocusEffect,useNavigation } from '@react-navigation/native';
+import { useFocus } from '../Contexts/FocusContext';
+
+
 
 const SettingsScreen = () => {
+  const navigation = useNavigation();
+  const { setfocus } = useFocus(); // Use o contexto de foco
+
+  useFocusEffect(
+    useCallback(() => {
+      setfocus('Home');
+    }, [navigation])
+  );
+
+
+
+
+
+
+
+
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.footerContent}>

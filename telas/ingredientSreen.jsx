@@ -1,10 +1,10 @@
 import  { useState, useCallback } from 'react';
 import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity, KeyboardAvoidingView,Pressable, Platform ,Alert} from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/Ionicons';
 import { useFocus } from '../Contexts/FocusContext';
 import { getDb } from '../baseDeDados/database';
 import ingredientImages from '../imageMapping';
+import { Ionicons } from '@expo/vector-icons';
 
 const AvailableIngredientsScreen = ({navigation}) => {
   const [ingredientName, setIngredientName] = useState('');
@@ -122,7 +122,7 @@ const AvailableIngredientsScreen = ({navigation}) => {
           <View style={{flexDirection:'row', alignSelf:'center',marginBottom:10}}>
           <Text style={styles.title}>{item.name}</Text>
           <TouchableOpacity onPress={() => removeIngredient(item.id)} style={styles.removeButton}>
-          <Icon name="trash-outline" size={24} color="#db8a8a" />
+          <Ionicons name="trash-outline" size={24} color="#db8a8a" />
           </TouchableOpacity>
           </View>
           <TextInput
