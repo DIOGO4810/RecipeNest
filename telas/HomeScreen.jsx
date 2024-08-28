@@ -80,7 +80,7 @@ const HomeScreen = () => {
       <View style={styles.textContainer}>
         <Text style={styles.Title}> Utilizar a app</Text>
         <Text style={styles.Description}>
-        {'\t'}✓ Explore uma ampla variedade de receitas, desde pratos principais até sobremesas.{'\n\n'}
+        {'\t'}✓ Explore uma ampla variedade de receitas, desde pratos principais até sobremesas aonde ao clickar nas mesmas conseguirá ver informações sobre as mesmas.{'\n\n'}
        {'\t'} ✓  Armazene os ingredientes que você tem em casa e descubra quais receitas pode preparar com eles.{'\n\n'}
        {'\t\t'}✓{'\t\t'}Mantenha uma lista de compras atualizada para não esquecer de nenhum ingrediente essencial.
         </Text>
@@ -181,6 +181,7 @@ const styles = StyleSheet.create({
   
   // Elevation property for Android
   elevation: 10,           // Creates a shadow effect on Android
+ 
   },
   gridText: {
     fontSize: 18,

@@ -149,8 +149,10 @@ const AvailableIngredientsScreen = ({navigation}) => {
       <FlatList
        key={'two-columns'}
         ListHeaderComponent={
-          <View style={{ alignItems: 'center', paddingVertical: 10 }}>
-            <Text style={[styles.title, { maxWidth: 300, textAlign: 'center' }]}>Adicionar Ingrediente</Text>
+          <View>
+          <View style={{ alignItems: 'center', paddingVertical: 10,backgroundColor:'#FEFFFF',borderWidth:2,borderColor:'#D0F4FF',borderRadius:10, margin:5 }}>
+          
+            <Text style={[styles.title, { maxWidth: 300, textAlign: 'center' , marginBottom:20}]}>Adicionar Ingrediente </Text>
             <TextInput
               style={[styles.input, { width: 250 }]}  // Fixed width for the input
               placeholder="Nome do Ingrediente"
@@ -188,9 +190,11 @@ const AvailableIngredientsScreen = ({navigation}) => {
              <Pressable style={styles.button} onPress={addIngredient}>
              <Text style={styles.text}>{"Adicionar"}</Text>
              </Pressable>
-             <View style={{width:'100%',height:2,backgroundColor:'rgba(0,0,0,0.4)',marginVertical:20}}></View>
-             <Text style={[styles.title]}>O meu frigorífico</Text>
-          </View >
+             </View>
+           
+             <Text style={[styles.title2]}>O meu frigorífico </Text>
+         </View>
+       
         }
         
         data={ingredients}
@@ -220,14 +224,22 @@ const styles = StyleSheet.create({
     margin: 10,
     fontWeight:'bold'
   },
+  title2:{
+    fontSize: 25,
+    marginBottom: 10,
+    marginTop:30,
+    fontWeight:'bold',
+    alignSelf: 'center',
+  },
+
   biggerText: {
     fontSize: 20,
   },
   input: {
     height: 40,
-    borderColor: 'gray',
+    borderColor: '#B0CDFE',
     borderWidth: 1,
-    backgroundColor: '#e6fff7',
+    backgroundColor: '#E1F8FF',
     marginBottom:20,
     padding: 10,
     width: '80%',
@@ -239,14 +251,24 @@ const styles = StyleSheet.create({
     margin: 10,
   },
   ingredientItem: {
+    borderColor: '#B0CDFE',
+    borderWidth:3,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginVertical: 10,
     paddingHorizontal: 10,
-    borderRadius: 10,
-    backgroundColor: '#ccffee',
+    backgroundColor: '#D0F4FF',
     padding: 10,
+    borderRadius:10,
+    shadowColor: '#000',    // Shadow color (black)
+    shadowOffset: { width: 0, height: 5 }, // Offset the shadow to create a depth effect
+    shadowOpacity: 0.3,     // Shadow transparency (0.3 = 30% opaque)
+    shadowRadius: 6.5,        // How blurry the shadow is
+    
+    // Elevation property for Android
+    elevation: 10,           // Creates a shadow effect on Android
+   
   },
   detailsContainer: {
     flex: 1,
@@ -261,8 +283,10 @@ const styles = StyleSheet.create({
     marginLeft:30,
   },
   button:{
-    backgroundColor: '#99ffdd',
+    backgroundColor: '#BED6FE',
     borderRadius: 10,
+    marginTop:10,
+    marginBottom:10,
   },
   text:{
     fontSize:18,
