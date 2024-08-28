@@ -242,7 +242,7 @@ function BottomTabNavigator() {
             return <MaterialCommunityIcons name={iconName} size={size} color={color} />;
           } else if (route.name === 'Ingredientes') {
             iconName = focus == 'IngredientesDrawer' ? 'cart' : 'cart-outline';
-            color = focus == 'IngredientesDrawer' ? '#33ffbb' : 'gray';
+            color = focus == 'IngredientesDrawer' ? '#BBEEFE' : 'gray';
             return <Ionicons name={iconName} size={size} color={color} />;
           }
 
@@ -258,7 +258,7 @@ function BottomTabNavigator() {
           } else if (route.name === 'Sobremesas') {
             labelColor = focus == 'SobremesasDrawer' ? '#ff99a8' : 'gray';
           } else if (route.name === 'Ingredientes') {
-            labelColor = focus == 'IngredientesDrawer' ? '#00ffaa' : 'gray';
+            labelColor = focus == 'IngredientesDrawer' ? '#85E2FF' : 'gray';
           }
 
           return (
