@@ -44,7 +44,7 @@ const EveryRecipe = () => {
     useFocusEffect(
       useCallback(() => {
         fetchRecipes();
-        setfocus('Home')
+        setfocus('EveryRecipe')
       }, [searchQuery,navigation]) 
       );
   

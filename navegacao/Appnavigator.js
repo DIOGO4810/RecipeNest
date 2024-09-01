@@ -46,6 +46,7 @@ function CustomDrawerContent(props) {
 function DrawerNavigator() {
   const { searchQuery, setSearchQuery } = useSearch();
   const [isSearchBarExpanded, setIsSearchBarExpanded] = useState(false);
+  const {focus} = useFocus();
 
   const inputRef = useRef(null);
   const navigation = useNavigation();
@@ -95,36 +96,45 @@ function DrawerNavigator() {
         ),
         headerRight: () => (
           <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 15 }}>
-            {isSearchBarExpanded ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <TextInput
-                  ref={inputRef}
-                  style={{
-                    height: 35,
-                    width: 180,
-                    borderColor: 'gray',
-                    borderWidth: 1,
-                    borderRadius: 10,
-                    paddingHorizontal: 10,
-                    backgroundColor: '#f4f4f4',
-                  }}
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                />
-                <TouchableOpacity onPress={handleClearSearch} style={{ marginLeft: -30, marginRight: 10 }}>
-                  <Feather name="x-circle" size={20} color="gray" />
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity
-                onPress={handleSearchIconPress}
-                style={{ marginRight: 15 }}
-                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-              >
-                <Feather name="search" size={24} color="black" />
-              </TouchableOpacity>
-            )}
+            {(focus === 'Meals' || focus === 'IngredientesDrawer' || focus === 'SobremesasDrawer' || focus === 'EveryRecipe'|| focus === 'ShoppingList' ) ? 
+            (
+              isSearchBarExpanded ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <TextInput
+                    ref={inputRef}
+                    style={{
+                      height: 35,
+                      width: 180,
+                      borderColor: 'gray',
+                      borderWidth: 1,
+                      borderRadius: 10,
+                      paddingHorizontal: 10,
+                      backgroundColor: '#f4f4f4',
+                    }}
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                  />
+                  <TouchableOpacity onPress={handleClearSearch} style={{ marginLeft: -30, marginRight: 10 }}>
+                    <Feather name="x-circle" size={20} color="gray" />
+                  </TouchableOpacity>
+                </View>
+                ) : (
+                  <TouchableOpacity
+                    onPress={handleSearchIconPress}
+                    style={{ marginRight: 15 }}
+                    hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                  >
+                    <Feather name="search" size={24} color="black" />
+                  </TouchableOpacity>
+                )
+            ) : null
+            }
+
+            
+
+
+
             <TouchableOpacity
               onPress={() => navigation.openDrawer()}
               style={{ marginLeft: 10 }}

@@ -2,6 +2,7 @@ import  { useState, useCallback } from 'react';
 import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity, KeyboardAvoidingView,Pressable, Platform ,Alert} from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useFocus } from '../Contexts/FocusContext';
+import { useSearch } from '../Contexts/SearchContext';
 import { getDb } from '../baseDeDados/database';
 import ingredientImages from '../imageMapping';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,13 +13,14 @@ const AvailableIngredientsScreen = ({navigation}) => {
   const [unit, setUnit] = useState(null);
   const {setfocus}= useFocus();
   const [ingredients, setIngredients] = useState([]);
+  const {searchQuery} = useSearch();
   const db = getDb();
 
   useFocusEffect(
     useCallback(() => {
       loadIngredients();
       setfocus('IngredientesDrawer');
-    }, [navigation])
+    }, [navigation,searchQuery])
   );
 
   const loadIngredients = () => {
@@ -36,7 +38,15 @@ const AvailableIngredientsScreen = ({navigation}) => {
             unit: item.unit,
             image: item.image,
           }));
-          setIngredients(ingredientsArray);
+          
+          const ingredientsArrayAfterSearch = ingredientsArray.filter
+          ((item) => 
+          item.name.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+
+
+
+          setIngredients(ingredientsArrayAfterSearch);
         },
         (tx, error) => {
           console.error('Erro ao carregar ingredientes:', error);
@@ -59,7 +69,7 @@ const AvailableIngredientsScreen = ({navigation}) => {
     db.transaction(tx => {
       tx.executeSql(
         'INSERT INTO ingredients (name, quantity, unit, image) VALUES (?, ?, ?, ?)',
-        [ingredientName, quantity, unit === null ? null : unit, imageName],
+        [ingredientName.trim(), quantity, unit === null ? null : unit, imageName],
         () => {
           loadIngredients();
           setIngredientName('');

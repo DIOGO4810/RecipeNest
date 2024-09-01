@@ -100,7 +100,7 @@ export const checkIngredientsAvailability = async (recipeId) => {
                 const availableIngredients = ingredientsRows._array;
                 const hasAllIngredients = recipeIngredients.every(recipeIngredient => {
                   const availableIngredient = availableIngredients.find(
-                    ingredient => removerAcentos((ingredient.name.toLowerCase()).trim()) === recipeIngredient.name.toLowerCase()
+                    ingredient => removerAcentos((ingredient.name.toLowerCase()).trim()) === recipeIngredient.name.toLowerCase().trim()
                   );
 
                   if (availableIngredient) {
@@ -240,7 +240,7 @@ export const addInitialRecipes = () => {
         image: require('../assets/images/Recypes/bolo.jpg'),
         category: 'sobremesa',
         ingredients: JSON.stringify([
-            { "name": "eggs", "quantity": "Null", "unit": 3 },
+            { "name": "eggs ", "quantity": "Null", "unit": 3 },
             { "name": "flour", "quantity": "100", "unit": "Null" },
             { "name": "leite", "quantity": "300", "unit": "Null" }
         ]),
