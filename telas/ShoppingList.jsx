@@ -299,7 +299,7 @@ const ShoppingList = () => {
              <Text style={styles.text}>{"Adicionar"}</Text>
              </Pressable>
              <View style={{width:'100%',height:2,backgroundColor:'rgba(0,0,0,0.4)',marginVertical:20}}></View>
-             <Text style={[styles.title]}>Lista de compras</Text>
+             <Text style={[styles.title]}>Lista de compras :</Text>
           </View >
         }
         

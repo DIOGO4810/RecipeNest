@@ -14,6 +14,7 @@ const fontsizeRelatable = width*0.04;
 
 
 const AvailableIngredientsScreen = ({ navigation }) => {
+
   const [ingredientName, setIngredientName] = useState('');
   const [quantity, setQuantity] = useState('');
   const [unit, setUnit] = useState('');

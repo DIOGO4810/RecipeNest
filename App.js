@@ -35,7 +35,7 @@ export default function App() {
 
   return (
     <FocusProvider>
-      <SearchProvider>
+    <SearchProvider>
     <VeganProvider>
      <NavigationContainer>
      <SafeAreaView style={{ flex: 1 }}>

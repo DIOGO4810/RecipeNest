@@ -41,7 +41,7 @@ const HomeScreen = () => {
         </TouchableOpacity>
 
         <TouchableOpacity 
-          style={[styles.gridItem, {backgroundColor: '#4dffc3', marginTop:40}]} 
+          style={[styles.gridItem, {backgroundColor: '#BBEEFE', marginTop:40}]} 
           onPress={() => navigateToScreen('IngredientesDrawer')}
         >
           <Text style={styles.gridText}>Ingredientes</Text>

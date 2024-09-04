@@ -292,28 +292,53 @@ const BakeryScreen = () => {
 
             <Text style={styles.modalRecipeName}>{selectedRecipe.name}</Text>
 
-            <Text style={styles.Mtitle}>Tempo de Preparação: {selectedRecipe.preparation_time} minutos {'\n'}</Text>
+            <Text style={{fontSize:16,fontWeight: 'bold',}}>Tempo de Preparação: {selectedRecipe.preparation_time} minutos {'\n'}</Text>
       <Text style={[styles.biggerLtext,{marginBottom:10}]}>{selectedRecipe.description}</Text>
 
       {/* Alinhar Ingredientes e Valores Nutricionais em paralelo */}
-      <View style={styles.ingredientsContainer}>
-        <View style={styles.ingredientsColumn}>
+     
+        <View style={styles.ingredientsContainer}>
           <Text style={styles.Mtitle}>Ingredientes:</Text>
           {selectedRecipe.ingredients.map((ingredient, index) => (
-            <Text key={index} style={styles.bbiggerStext}>
-              - {ingredient.name} ({ingredient.quantity === "Null" ? '' : `${ingredient.quantity} gramas`} {ingredient.unit === "Null" ? '' : `${ingredient.unit} unidades`})
-            </Text>
+            <View   key={index} style={{flexDirection:'row'}}>
+              <Text   style={{fontSize:16,fontWeight: 'bold',}} >
+              {'>'} {ingredient.name} {'\t'}
+               </Text>
+               <Text style={styles.bbiggerStext} >
+               - {` ${ingredient.quantity} gramas ou ${ingredient.unit} unidades` }
+              </Text>
+            </View>
           ))}
         </View>
-        <View style={styles.nutritionalColumn}>
+   <View style={styles.nutritionalColumn}>
           <Text style={styles.Mtitle}>Valores Nutricionais:</Text>
-          <Text style={styles.bbiggerStext}>Calorias: {selectedRecipe.calories} kcal</Text>
-          <Text style={styles.bbiggerStext}>Proteínas: {selectedRecipe.protein} g</Text>
-          <Text style={styles.bbiggerStext}>Carboidratos: {selectedRecipe.carbs} g</Text>
-          <Text style={styles.bbiggerStext}>Gorduras: {selectedRecipe.fats} g</Text>
-        </View>
+          <View style={{flexDirection: 'row', justifyContent: 'space-between', width: '100%'}}>
+        <View style={{flex: 1}}>
+          <View style={{flexDirection: 'row'}}>
+           <Text style={styles.bbiggerStextT}>Calorias:  {'\t'}</Text>
+            <Text style={styles.bbiggerStext}>{selectedRecipe.calories} kcal</Text>
+          </View> 
+      
+           <View style={{flexDirection: 'row'}}>
+          <Text style={styles.bbiggerStextT}>Carboidratos:  {'\t'}</Text>
+          <Text style={styles.bbiggerStext}>{selectedRecipe.carbs} g</Text>
+          </View> 
       </View>
+    
+      <View style={{flex: 1}}>
+        <View style={{flexDirection: 'row'}}>
+        <Text style={styles.bbiggerStextT}>Proteínas:  {'\t'}</Text>
+        <Text style={styles.bbiggerStext}>{selectedRecipe.protein} g</Text>
+        </View> 
+      
+        <View style={{flexDirection: 'row'}}>
+        <Text style={styles.bbiggerStextT}>Gorduras:  {'\t'}</Text>
+        <Text style={styles.bbiggerStext}>{selectedRecipe.fats} g</Text>
+       </View> 
     </View>
+  </View>
+      </View>
+      </View>
         </Modal>
       )}
     </View>
@@ -353,15 +378,22 @@ const styles = StyleSheet.create({
   bbiggerStext: {
     fontSize: 16,
     alignSelf:'flex-start',
-    
-
   },
+
   button: {
     backgroundColor: '#D0F4FF',
     borderRadius: 10,
     marginTop: 10,
     marginBottom: 10,
   },
+
+  bbiggerStextT: {
+    fontSize: 16,
+    alignSelf:'flex-start',
+    fontWeight: 'bold',
+  },
+
+
   checkboxContainer: {
     flexDirection: 'row',
     marginLeft: 'auto',
@@ -396,25 +428,29 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   ingredientsContainer: {
-    flexDirection: 'row',
+   
     justifyContent: 'space-between',
     width: '100%',
+    paddingLeft:10,
+    paddingBottom:5,
   },
-  ingredientsColumn: {
-    flex: 1,
-  },
+ 
   nutritionalColumn: {
-    flex: 1,
-    paddingLeft: 10,
-  
+   
+    paddingTop:5,
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingLeft:10,
     
   },
   Stitle: {
     fontSize: 14,
     fontWeight: 'bold',
     margin: 20,
-  },Mtitle: {
-    fontSize: 18,
+  },
+  Mtitle: {
+    paddingBottom:5,
+    fontSize: 16,
     fontWeight: 'bold',
     alignSelf: 'flex-start',
     
@@ -508,7 +544,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   biggerLtext: {
-    fontSize:18 
+    fontSize:16,
    },
 
    biggerMtext:{
