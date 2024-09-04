@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { Text, TouchableOpacity, View, TextInput } from 'react-native';
+import { Text, TouchableOpacity, View, TextInput , Dimensions} from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList,DrawerItem } from '@react-navigation/drawer';
 import MealScreen from '../telas/MealScreen';
@@ -46,6 +46,7 @@ function CustomDrawerContent(props) {
 function DrawerNavigator() {
   const { searchQuery, setSearchQuery } = useSearch();
   const [isSearchBarExpanded, setIsSearchBarExpanded] = useState(false);
+  const {focus} = useFocus();
 
   const inputRef = useRef(null);
   const navigation = useNavigation();
@@ -95,36 +96,45 @@ function DrawerNavigator() {
         ),
         headerRight: () => (
           <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 15 }}>
-            {isSearchBarExpanded ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <TextInput
-                  ref={inputRef}
-                  style={{
-                    height: 35,
-                    width: 180,
-                    borderColor: 'gray',
-                    borderWidth: 1,
-                    borderRadius: 10,
-                    paddingHorizontal: 10,
-                    backgroundColor: '#f4f4f4',
-                  }}
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                />
-                <TouchableOpacity onPress={handleClearSearch} style={{ marginLeft: -30, marginRight: 10 }}>
-                  <Feather name="x-circle" size={20} color="gray" />
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity
-                onPress={handleSearchIconPress}
-                style={{ marginRight: 15 }}
-                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-              >
-                <Feather name="search" size={24} color="black" />
-              </TouchableOpacity>
-            )}
+            {(focus === 'Meals' || focus === 'IngredientesDrawer' || focus === 'SobremesasDrawer' || focus === 'EveryRecipe'|| focus === 'ShoppingList' ) ? 
+            (
+              isSearchBarExpanded ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <TextInput
+                    ref={inputRef}
+                    style={{
+                      height: 35,
+                      width: 180,
+                      borderColor: 'gray',
+                      borderWidth: 1,
+                      borderRadius: 10,
+                      paddingHorizontal: 10,
+                      backgroundColor: '#f4f4f4',
+                    }}
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                  />
+                  <TouchableOpacity onPress={handleClearSearch} style={{ marginLeft: -30, marginRight: 10 }}>
+                    <Feather name="x-circle" size={20} color="gray" />
+                  </TouchableOpacity>
+                </View>
+                ) : (
+                  <TouchableOpacity
+                    onPress={handleSearchIconPress}
+                    style={{ marginRight: 15 }}
+                    hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                  >
+                    <Feather name="search" size={24} color="black" />
+                  </TouchableOpacity>
+                )
+            ) : null
+            }
+
+            
+
+
+
             <TouchableOpacity
               onPress={() => navigation.openDrawer()}
               style={{ marginLeft: 10 }}
@@ -218,6 +228,13 @@ function BottomTabNavigator() {
   const {focus,setfocus} = useFocus();
   const navigation = useNavigation(); // useNavigation hook to navigate to drawer screens
 
+  // Get screen width
+const { width, height } = Dimensions.get('window');
+
+// Calculate dynamic size based on screen size
+const dynamicIconSize = width * 0.07; // 7% of the screen width
+const dynamicFontSize = width * 0.034; // 4% of the screen width
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -231,19 +248,19 @@ function BottomTabNavigator() {
           if (route.name === 'Home') {
             iconName = isFocused ? 'home' : 'home-outline';
             color = 'gray'
-            return <Ionicons name={iconName} size={size} color={color} />;
+            return <Ionicons name={iconName} size={dynamicIconSize} color={color} />;
           } else if (route.name === 'Refeições') {
             iconName = focus == 'Meals' ? 'fast-food' : 'fast-food-outline';
             color = focus == 'Meals' ? '#ffe680' : 'gray';
-            return <Ionicons name={iconName} size={size} color={color} />;
+            return <Ionicons name={iconName} size={dynamicIconSize} color={color} />;
           } else if (route.name === 'Sobremesas') {
             iconName = focus == 'SobremesasDrawer' ? 'cake-variant' : 'cake-variant-outline';
             color = focus == 'SobremesasDrawer' ? '#ffb6c1' : 'gray';
-            return <MaterialCommunityIcons name={iconName} size={size} color={color} />;
+            return <MaterialCommunityIcons name={iconName} size={dynamicIconSize} color={color} />;
           } else if (route.name === 'Ingredientes') {
             iconName = focus == 'IngredientesDrawer' ? 'cart' : 'cart-outline';
             color = focus == 'IngredientesDrawer' ? '#BBEEFE' : 'gray';
-            return <Ionicons name={iconName} size={size} color={color} />;
+            return <Ionicons name={iconName} size={dynamicIconSize} color={color} />;
           }
 
           return null;
@@ -262,7 +279,7 @@ function BottomTabNavigator() {
           }
 
           return (
-            <Text style={{ color: labelColor, fontSize: 16, fontWeight: 'bold' }}>
+            <Text style={{ color: labelColor, fontSize: dynamicFontSize, fontWeight: 'bold' }}>
               {route.name}
             </Text>
           );

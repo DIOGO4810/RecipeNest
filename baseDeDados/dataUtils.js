@@ -1,6 +1,6 @@
 import { getDb } from './database';
 
-function removerAcentos(str) {
+export function removerAcentos(str) {
   return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
@@ -71,6 +71,32 @@ export const deleteRecipe = (id) => {
   });
 };
 
+
+
+
+// Função para deletar receitas
+export const deleteIngredient = (id) => {
+  const db = getDb();
+
+  if (!db) {
+    console.error('Banco de dados não foi aberto corretamente');
+    return;
+  }
+
+  db.transaction(tx => {
+    tx.executeSql(
+      'DELETE FROM ingredients WHERE id = ?',
+      [id],
+      (_, result) => {
+        console.log('Ingrediente deletada com sucesso', result);
+      },
+      (tx, error) => {
+        console.error('Erro ao deletar receita', error);
+      }
+    );
+  });
+};
+
 export const checkIngredientsAvailability = async (recipeId) => {
   const db = getDb();
 
@@ -100,7 +126,7 @@ export const checkIngredientsAvailability = async (recipeId) => {
                 const availableIngredients = ingredientsRows._array;
                 const hasAllIngredients = recipeIngredients.every(recipeIngredient => {
                   const availableIngredient = availableIngredients.find(
-                    ingredient => removerAcentos((ingredient.name.toLowerCase()).trim()) === recipeIngredient.name.toLowerCase()
+                    ingredient => removerAcentos((ingredient.name.toLowerCase()).trim()) === recipeIngredient.name.toLowerCase().trim()
                   );
 
                   if (availableIngredient) {
@@ -233,6 +259,7 @@ export const addInitialRecipes = () => {
             { "name": "eggs", "quantity": "180", "unit": 3 },
             { "name": "flour", "quantity": "100", "unit": 1 },
             { "name": "pao", "quantity": 1000, "unit": "5" }
+
         ]),
         calories: 250,
         protein: 15,
@@ -354,7 +381,10 @@ export const addInitialRecipes = () => {
         ingredients: JSON.stringify([
             { "name": "eggs", "quantity": "Null", "unit": 3 },
             { "name": "flour", "quantity": "100", "unit": "Null" },
-            { "name": "leite", "quantity": "300", "unit": "Null" }
+            { "name": "leite", "quantity": "300", "unit": "Null" },
+            { "name": "abacate", "quantity": "Null", "unit": "2" },
+            
+
         ]),
         calories: 300,
         protein: 5,

@@ -2,9 +2,11 @@ import  { useState, useCallback } from 'react';
 import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity, KeyboardAvoidingView,Pressable, Platform ,Alert} from 'react-native';
 import { useFocusEffect,useNavigation } from '@react-navigation/native';
 import { useFocus } from '../Contexts/FocusContext';
+import { useSearch } from '../Contexts/SearchContext';
 import { getDb } from '../baseDeDados/database';
 import ingredientImages from '../imageMapping';
 import { Feather,FontAwesome5,Ionicons } from '@expo/vector-icons';
+import { removerAcentos } from '../baseDeDados/dataUtils';
 
 const ShoppingList = () => {
   const [ingredientName, setIngredientName] = useState('');
@@ -14,15 +16,16 @@ const ShoppingList = () => {
   const db = getDb();
   const navigation = useNavigation();
   const { setfocus } = useFocus(); // Use o contexto de foco
+  const {searchQuery} = useSearch();
 
 
 
   useFocusEffect(
     useCallback(() => {
       loadIngredients();
-      setfocus('Home');
+      setfocus('ShoppingList');
 
-    }, [navigation])
+    }, [navigation,searchQuery])
   );
 
   const loadIngredients = () => {
@@ -40,7 +43,14 @@ const ShoppingList = () => {
             unit: item.unit,
             
           }));
-          setIngredients(ingredientsArray);
+          const ingredientsArrayAfterSearch = ingredientsArray.filter
+          ((item) => 
+          item.name.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+
+
+
+          setIngredients(ingredientsArrayAfterSearch);
         },
         (tx, error) => {
           console.error('Erro ao carregar ingredientes:', error);
@@ -63,7 +73,7 @@ const ShoppingList = () => {
     db.transaction(tx => {
       tx.executeSql(
         'INSERT INTO buylist (name, quantity, unit) VALUES (?, ?, ?)',
-        [ingredientName, quantity, unit === null ? null : unit],
+        [removerAcentos(ingredientName.trim()), quantity, unit === null ? null : unit],
         () => {
           loadIngredients();
           setIngredientName('');
@@ -97,34 +107,95 @@ const ShoppingList = () => {
   const moveIngredientToAvailable = (item) => {
     const { id, name, quantity, unit } = item;
     console.log('Movendo ingrediente para a tabela de disponíveis:', item);
-  
+    
+    
     db.transaction(tx => {
-      // Insert the ingredient into the 'ingredients' table
+      // Step 1: Check if the ingredient already exists in the 'ingredients' table
       tx.executeSql(
-        'INSERT INTO ingredients (name, quantity, unit, image) VALUES (?, ?, ?, ?)',
-        [name, quantity, unit, name.toLowerCase().replace(/\s+/g, '-')],
-        (_, result) => {
-          console.log('Ingrediente adicionado à tabela de disponíveis:', result);
+        'SELECT * FROM ingredients WHERE name = ?',
+        [name],
+        (_, { rows }) => {
+
+    
+
+          if (rows.length > 0) {
+            console.log('1');
+            // Ingredient already exists, so update the quantity or unit
+            const existingIngredient = rows.item(0);
+            
+            if( quantity === null && existingIngredient.quantity !== null || unit !== null && existingIngredient.quantity !== null ){
+            Alert.alert('Erro de medida','Este ingrediente está a ser medido em quantidade no seu frigorífico');
+            }else if (unit === null && existingIngredient.unit !== null || quantity !== null && existingIngredient.unit !== null ){
+              Alert.alert('Erro de medida','Este ingrediente está a ser medido em unidades no seu frigorífico');
+            }else{
+            // Determine the new quantity and unit
+            const newQuantity = quantity !== null ? (existingIngredient.quantity !== null ? Number(existingIngredient.quantity) + Number(quantity) : quantity) : existingIngredient.quantity ;
+            const newUnit = unit !== null ? (existingIngredient.unit !== null ? Number(existingIngredient.unit) + Number(unit) : unit) : existingIngredient.unit;
   
-          // Delete the ingredient from the 'buylist' table
-          tx.executeSql(
-            'DELETE FROM buylist WHERE id = ?',
-            [id],
-            (_, result) => {
-              console.log('Ingrediente removido da lista de compras:', result);
-              loadIngredients();
-            },
-            (tx, error) => {
-              console.error('Erro ao remover ingrediente da lista de compras:', error);
+            // Update the existing ingredient
+            tx.executeSql(
+              'UPDATE ingredients SET quantity = ?, unit = ? WHERE id = ?',
+              [newQuantity, newUnit, existingIngredient.id],
+              (_, updateResult) => {
+                console.log('Ingrediente atualizado na tabela de disponíveis:', updateResult);
+  
+                // Delete the ingredient from the 'buylist' table
+                tx.executeSql(
+                  'DELETE FROM buylist WHERE id = ?',
+                  [id],
+                  (_, deleteResult) => {
+                    console.log('Ingrediente removido da lista de compras:', deleteResult);
+                    loadIngredients();
+                  },
+                  (tx, error) => {
+                    console.error('Erro ao remover ingrediente da lista de compras:', error);
+                  }
+                );
+              },
+              (tx, error) => {
+                console.error('Erro ao atualizar ingrediente na tabela de disponíveis:', error);
+              }
+            );
+          } 
             }
-          );
+            
+
+          else {
+            console.log('2');
+
+            // Ingredient does not exist, insert it into the 'ingredients' table
+            tx.executeSql(
+              'INSERT INTO ingredients (name, quantity, unit, image) VALUES (?, ?, ?, ?)',
+              [name, quantity, unit, name.toLowerCase().replace(/\s+/g, '-')],
+              (_, insertResult) => {
+                console.log('Ingrediente adicionado à tabela de disponíveis:', insertResult);
+  
+                // Delete the ingredient from the 'buylist' table
+                tx.executeSql(
+                  'DELETE FROM buylist WHERE id = ?',
+                  [id],
+                  (_, deleteResult) => {
+                    console.log('Ingrediente removido da lista de compras:', deleteResult);
+                    loadIngredients();
+                  },
+                  (tx, error) => {
+                    console.error('Erro ao remover ingrediente da lista de compras:', error);
+                  }
+                );
+              },
+              (tx, error) => {
+                console.error('Erro ao adicionar ingrediente à tabela de disponíveis:', error);
+              }
+            );
+          }
         },
         (tx, error) => {
-          console.error('Erro ao adicionar ingrediente à tabela de disponíveis:', error);
+          console.error('Erro ao verificar se o ingrediente já existe na tabela de disponíveis:', error);
         }
       );
     });
   };
+  
 
   const handleTextInputChange = (id, value, type) => {
     const updatedIngredients = ingredients.map(ingredient =>

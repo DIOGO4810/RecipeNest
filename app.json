@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "Summer-project",
+    "name": "RecipeNest",
     "slug": "Summer-project",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/ico.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
@@ -17,9 +17,10 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/ico.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.receitsNest.summerproject" 
     },
     "web": {
       "bundler": "metro",
@@ -32,6 +33,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "ce26b18e-224f-4e24-af9e-0d09a4fb164b"
+      }
     }
   }
 }

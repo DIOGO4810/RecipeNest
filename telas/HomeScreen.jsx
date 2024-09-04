@@ -1,9 +1,11 @@
 import {useCallback, useState} from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity,Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity,Image,Dimensions } from 'react-native';
 import { useNavigation , useFocusEffect} from '@react-navigation/native';
 import { useFocus } from '../Contexts/FocusContext';
 import cookimage from '../assets/images/home.jpg';
 
+const {width,height} = Dimensions.get('window');
+const dynamicwidth = width * 0.072
 
 const HomeScreen = () => {
   const navigation = useNavigation(); // Hook para usar a navegação
@@ -104,7 +106,7 @@ const styles = StyleSheet.create({
     top: '50%',            // Center the text vertically
     left: '50%',           // Center the text horizontally
      // Adjust the text position to center it
-    fontSize: 30,
+    fontSize: dynamicwidth,
     fontWeight: 'bold',
     color: 'white',        // Ensure the text is visible on the image
     textAlign: 'center',
@@ -112,6 +114,7 @@ const styles = StyleSheet.create({
     padding: 10,   
     transform: [{ translateX: -178 }, { translateY: -50}],       
   },
+  
   imageContainer: {
     position: 'relative',  // Make the container relative for positioning
     width: 350,            // Match the image width
