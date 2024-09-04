@@ -2,21 +2,23 @@ import  { useState, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, Modal } from 'react-native';
 import { checkIngredientsAvailability } from '../baseDeDados/dataUtils';
 import { getDb } from '../baseDeDados/database';
-import { useFocusEffect } from '@react-navigation/native';
-import { Feather,MaterialCommunityIcons } from '@expo/vector-icons';
+import { useFocusEffect,useNavigation } from '@react-navigation/native';
+import { Feather,MaterialCommunityIcons,FontAwesome5 } from '@expo/vector-icons';
 import { useFocus } from '../Contexts/FocusContext';
 import { useVegan } from '../Contexts/VeganContext';
 import { useSearch } from '../Contexts/SearchContext';
 
-const BakeryScreen = ({navigation}) => {
+const BakeryScreen = () => {
   const [recipes, setRecipes] = useState([]);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [isTwoColumn, setIsTwoColumn] = useState(false); // Estado para controlar o número de colunas
+  const [wasClicked,setWasClicked] = useState(false);
   const [recypeCount,setRecypeCount] = useState(0);
-  const {setfocus}=useFocus();
+  const {focus,setfocus}=useFocus();
   const { searchQuery } = useSearch();
   const {isVeganChecked,setIsVeganChecked} = useVegan();
+  const navigation = useNavigation();
 
   const fetchRecipes = async () => {
     try {
@@ -72,8 +74,14 @@ const BakeryScreen = ({navigation}) => {
     useCallback(() => {
       fetchRecipes();
       setfocus('SobremesasDrawer');
-    }, [navigation,isVeganChecked,searchQuery])
+      setWasClicked(false);
+    }, [navigation,isVeganChecked,searchQuery,wasClicked])
   );
+
+
+
+
+
 
   const openModal = (recipe) => {
     setSelectedRecipe(recipe);
@@ -87,6 +95,23 @@ const BakeryScreen = ({navigation}) => {
   const handleVeganCheck = () => {
     setIsVeganChecked((prevState) => !prevState);
   };
+
+   function capitalizeFirstLetter(string) {
+    if (!string) return ''; // Verifica se a string é vazia ou undefined
+  
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+  } 
+
+      // Função para navegação
+      const navigateToScreen = (screen) => {
+        setfocus(screen);
+        console.log({focus});
+        navigation.navigate(screen); // Navega para a tela especificada
+      };
+
+
+
+
 
   const Custom = ({ label, isChecked, onCheck }) => {
     return (
@@ -155,8 +180,70 @@ const BakeryScreen = ({navigation}) => {
       <Text style={styles.noRecipesText}>
         Nenhuma receita disponível. Para ver receitas, adicione ingredientes na página de ingredientes!
       </Text>
+      <TouchableOpacity style={styles.button} onPress={() => navigateToScreen('IngredientesDrawer')}>
+    <Text style={[styles.biggerLtext,{padding:10}]}>Navegar para os Ingredientes</Text>
+      </TouchableOpacity>
+
     </View>
   );
+
+
+  const fridgeUpdate = (ingredients) => {
+    const db = getDb();
+
+  
+    ingredients.forEach((ingredient) => {
+      console.log(ingredient);
+    });
+  
+  
+    ingredients.forEach((ingredient) => {
+      const { name, quantity,unit } = ingredient;
+  
+      // Verifica se o ingrediente existe na tabela
+      db.transaction((tx) => {
+        tx.executeSql(
+          'SELECT * FROM ingredients WHERE name = ?',
+          [capitalizeFirstLetter(name)],
+          
+          (_, { rows }) => {
+            console.log(name);
+            if (rows.length > 0) {
+              const existingIngredient = rows.item(0);
+              const newQuantity = existingIngredient.quantity - quantity;
+              const newUnit = existingIngredient.unit - unit;
+              console.log(newQuantity,newUnit);
+              if (newQuantity >= 0 && newUnit >= 0 ||newQuantity >= 0 || newUnit >= 0  ) {
+                console.log("NETER");
+                // Atualiza a quantidade do ingrediente na tabela
+                tx.executeSql(
+                  'UPDATE ingredients SET quantity = ?, unit = ? WHERE name = ?',
+                  [newQuantity,newUnit, capitalizeFirstLetter(name)],
+                  (_, resultSet) => {
+                    console.log(`Ingrediente ${name} atualizado para ${newQuantity} e ${newUnit}.`);
+                    setWasClicked(true);
+                  },
+                  (_, error) => {
+                    console.log(`Erro ao atualizar ingrediente ${name}:`, error);
+                  }
+                );
+              }else{setModalVisible(false)}
+            } 
+          },
+          (_, error) => {
+            console.log('Erro ao verificar o ingrediente:', error);
+          }
+        );
+      });
+    });
+  };
+
+
+
+
+
+
+
 
   return (
     <View style={styles.container}>
@@ -195,6 +282,12 @@ const BakeryScreen = ({navigation}) => {
             <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
               <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
+
+      <TouchableOpacity style={styles.checkbutton} onPress={() => fridgeUpdate(selectedRecipe.ingredients)}>
+        <FontAwesome5 name="check" size={24} color="#4dff4d" />
+      </TouchableOpacity>
+      <Text style={styles.checkButtonText}>Receita{"\n"}acabada</Text>
+
             <Image source={selectedRecipe.image} style={styles.modalRecipeImage} />
 
             <Text style={styles.modalRecipeName}>{selectedRecipe.name}</Text>
@@ -263,35 +356,40 @@ const styles = StyleSheet.create({
     
 
   },
+  button: {
+    backgroundColor: '#D0F4FF',
+    borderRadius: 10,
+    marginTop: 10,
+    marginBottom: 10,
+  },
   checkboxContainer: {
     flexDirection: 'row',
-    marginLeft: 105,
+    marginLeft: 'auto',
     marginTop: 6,
   },
   outerCircle: {
     width: 24,
     height: 24,
-    borderRadius: 12, // Metade da largura/altura para um círculo perfeito
+    borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#009900', // Cor do anel externo
+    borderColor: '#009900',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
-
   },
   innerCircle: {
-    width: 18, // Menor que o círculo externo
-    height: 18, // Menor que o círculo externo
-    borderRadius: 9, // Metade da largura/altura para um círculo perfeito
-    backgroundColor: 'white', // Cor do fundo interno
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: 'white',
     alignItems: 'center',
     justifyContent: 'center',
   },
   filledCircle: {
-    width: 10, // Menor que o círculo interno
-    height: 10, // Menor que o círculo interno
-    borderRadius: 5, // Metade da largura/altura para um círculo perfeito
-    backgroundColor: '#009900', // Cor do círculo preenchido
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#009900',
   },
   label: {
     fontSize: 16,
@@ -376,6 +474,28 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 20, // Tamanho de fonte ajustado para uma aparência de "cruz"
   },
+  checkbutton:{
+    position: 'absolute',
+    top: 40,
+    right: 5,
+    padding: 10,
+    zIndex: 3,
+    borderRadius: 5,
+    marginLeft:20,
+    marginTop:10,
+
+  },
+  checkButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4dff4d',
+    textAlign: 'center',
+    marginTop: 45, // Ajusta a margem superior conforme necessário
+    position: 'absolute',
+    top: 40,
+    right: 5,
+  },
+  
   modalRecipeImage: {
     width: 150,
     height: 150,

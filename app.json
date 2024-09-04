@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "Summer-project",
+    "name": "RecipeNest",
     "slug": "Summer-project",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/ico.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
@@ -17,7 +17,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/ico.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.receitsNest.summerproject" 

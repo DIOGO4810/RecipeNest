@@ -1,6 +1,6 @@
 import { getDb } from './database';
 
-function removerAcentos(str) {
+export function removerAcentos(str) {
   return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
@@ -63,6 +63,32 @@ export const deleteRecipe = (id) => {
       [id],
       (_, result) => {
         console.log('Receita deletada com sucesso', result);
+      },
+      (tx, error) => {
+        console.error('Erro ao deletar receita', error);
+      }
+    );
+  });
+};
+
+
+
+
+// Função para deletar receitas
+export const deleteIngredient = (id) => {
+  const db = getDb();
+
+  if (!db) {
+    console.error('Banco de dados não foi aberto corretamente');
+    return;
+  }
+
+  db.transaction(tx => {
+    tx.executeSql(
+      'DELETE FROM ingredients WHERE id = ?',
+      [id],
+      (_, result) => {
+        console.log('Ingrediente deletada com sucesso', result);
       },
       (tx, error) => {
         console.error('Erro ao deletar receita', error);
@@ -223,9 +249,9 @@ export const addInitialRecipes = () => {
         image: require('../assets/images/Recypes/spagheti.jpg'),
         category: 'refeicao',
         ingredients: JSON.stringify([
-            { "name": "eggs", "quantity": "Null", "unit": 3 },
-            { "name": "flour", "quantity": "100", "unit": "Null" },
-            { "name": "pao", "quantity": "Null", "unit": "5" }
+            { "name": "eggs", "quantity": "180", "unit": 3 },
+            { "name": "flour", "quantity": "100", "unit": "0.1" },
+            { "name": "pao", "quantity": "260", "unit": "5" }
         ]),
         calories: 250,
         protein: 15,
@@ -240,7 +266,7 @@ export const addInitialRecipes = () => {
         image: require('../assets/images/Recypes/bolo.jpg'),
         category: 'sobremesa',
         ingredients: JSON.stringify([
-            { "name": "eggs ", "quantity": "Null", "unit": 3 },
+            { "name": "eggs", "quantity": "Null", "unit": 3 },
             { "name": "flour", "quantity": "100", "unit": "Null" },
             { "name": "leite", "quantity": "300", "unit": "Null" }
         ]),
@@ -347,7 +373,10 @@ export const addInitialRecipes = () => {
         ingredients: JSON.stringify([
             { "name": "eggs", "quantity": "Null", "unit": 3 },
             { "name": "flour", "quantity": "100", "unit": "Null" },
-            { "name": "leite", "quantity": "300", "unit": "Null" }
+            { "name": "leite", "quantity": "300", "unit": "Null" },
+            { "name": "abacate", "quantity": "Null", "unit": "2" },
+            
+
         ]),
         calories: 300,
         protein: 5,

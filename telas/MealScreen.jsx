@@ -1,25 +1,37 @@
 import { useState, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, Modal,Dimensions} from 'react-native';
 import { checkIngredientsAvailability } from '../baseDeDados/dataUtils';
 import { getDb } from '../baseDeDados/database';
-import { useFocusEffect } from '@react-navigation/native';
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useFocusEffect,useNavigation } from '@react-navigation/native';
+import { Feather, MaterialCommunityIcons,FontAwesome5 } from '@expo/vector-icons';
 import { useVegan } from '../Contexts/VeganContext';
 import { useSearch } from '../Contexts/SearchContext';
 import { useFocus } from '../Contexts/FocusContext';
 
-const MealScreen = ({ navigation }) => {
+
+export function capitalizeFirstLetter(string) {
+  if (!string) return ''; // Verifica se a string é vazia ou undefined
+
+  return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+} 
+
+const MealScreen = () => {
   // Estados
   const [recipes, setRecipes] = useState([]);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [isTwoColumn, setIsTwoColumn] = useState(false);
+  const [wasClicked,setWasClicked] = useState(false);
   const [recipeCount, setRecipeCount] = useState(0);
+  const navigation = useNavigation(); // Hook para usar a navegação
 
   // Contextos
   const { isVeganChecked, setIsVeganChecked } = useVegan();
-  const { setfocus } = useFocus();
+  const { focus,setfocus } = useFocus();
   const { searchQuery } = useSearch();
+
+    // Dimensões da tela
+    const { width, height } = Dimensions.get('window');
 
   // Função para buscar receitas
   const fetchRecipes = async () => {
@@ -72,10 +84,17 @@ const MealScreen = ({ navigation }) => {
     useCallback(() => {
       fetchRecipes();
       setfocus('Meals');
-    }, [isVeganChecked, searchQuery, navigation])
+      setWasClicked(false);
+    }, [isVeganChecked, searchQuery, navigation,wasClicked])
   );
 
-  // Funções de modal
+
+
+
+
+
+
+  // Funções de pequenas
   const openModal = (recipe) => {
     setSelectedRecipe(recipe);
     setModalVisible(true);
@@ -89,6 +108,19 @@ const MealScreen = ({ navigation }) => {
   const handleVeganCheck = () => {
     setIsVeganChecked((prevState) => !prevState);
   };
+
+    // Função para navegação
+    const navigateToScreen = (screen) => {
+      setfocus(screen);
+      console.log({focus});
+      navigation.navigate(screen); // Navega para a tela especificada
+    };
+
+  
+
+
+
+
 
   // Função para renderizar itens da lista
   const renderItem = ({ item }) => (
@@ -130,14 +162,92 @@ const MealScreen = ({ navigation }) => {
   );
 
   // Novo componente de mensagem sem receitas disponíveis
-  const renderNoRecipes = () => (
-    <View style={styles.noRecipesContainer}>
-      <MaterialCommunityIcons name="emoticon-sad-outline" size={50} color="#555" />
-      <Text style={styles.noRecipesText}>
-        Nenhuma receita disponível. Para ver receitas, adicione ingredientes na página de ingredientes!
-      </Text>
+// Função para renderizar a mensagem sem receitas disponíveis
+const renderNoRecipes = () => (
+  <View style={styles.noRecipesContainer}>
+    <MaterialCommunityIcons name="emoticon-sad-outline" size={50} color="#555" />
+    <Text style={styles.noRecipesText}>
+      Nenhuma receita disponível. Para ver receitas, adicione ingredientes na página de ingredientes!
+    </Text>
+
+   <TouchableOpacity style={styles.button} onPress={() => navigateToScreen('IngredientesDrawer')}>
+    <Text style={[styles.biggerLtext,{padding:10}]}>Navegar para os Ingredientes</Text>
+   </TouchableOpacity>
+  </View>
+);
+
+
+
+  // Componente Custom para checkbox
+const Custom = ({ label, isChecked, onCheck }) => (
+  <TouchableOpacity style={styles.checkboxContainer} onPress={onCheck}>
+    <View style={styles.outerCircle}>
+      <View style={styles.innerCircle}>
+        {isChecked && <View style={styles.filledCircle} />}
+      </View>
     </View>
-  );
+    <Text style={styles.label}>{label}</Text>
+  </TouchableOpacity>
+);
+
+
+
+const fridgeUpdate = (ingredients) => {
+  const db = getDb();
+
+
+  ingredients.forEach((ingredient) => {
+    console.log(ingredient);
+  });
+
+
+  ingredients.forEach((ingredient) => {
+    const { name, quantity,unit } = ingredient;
+
+    // Verifica se o ingrediente existe na tabela
+    db.transaction((tx) => {
+      tx.executeSql(
+        'SELECT * FROM ingredients WHERE name = ?',
+        [capitalizeFirstLetter(name)],
+        
+        (_, { rows }) => {
+          console.log(name);
+          if (rows.length > 0) {
+            const existingIngredient = rows.item(0);
+            const newQuantity = existingIngredient.quantity - quantity;
+            const newUnit = existingIngredient.unit - unit;
+            console.log(newQuantity,newUnit);
+            if (newQuantity >= 0 && newUnit >= 0 ||newQuantity >= 0 || newUnit >= 0  ) {
+              console.log("NETER");
+              // Atualiza a quantidade do ingrediente na tabela
+              tx.executeSql(
+                'UPDATE ingredients SET quantity = ?, unit = ? WHERE name = ?',
+                [newQuantity,newUnit, capitalizeFirstLetter(name)],
+                (_, resultSet) => {
+                  console.log(`Ingrediente ${name} atualizado para ${newQuantity} e ${newUnit}.`);
+                  setWasClicked(true);
+                },
+                (_, error) => {
+                  console.log(`Erro ao atualizar ingrediente ${name}:`, error);
+                }
+              );
+            }else{setModalVisible(false)}
+          } 
+        },
+        (_, error) => {
+          console.log('Erro ao verificar o ingrediente:', error);
+        }
+      );
+    });
+  });
+};
+
+
+
+
+
+
+// Return da funçao principal
 
   return (
     <View style={styles.container}>
@@ -145,6 +255,7 @@ const MealScreen = ({ navigation }) => {
         <View>
           {renderHeader()}
           {renderNoRecipes()}
+          
         </View>
       ) : (
         <FlatList
@@ -158,62 +269,66 @@ const MealScreen = ({ navigation }) => {
         />
       )}
 
-      {selectedRecipe && (
-        <Modal
-          visible={modalVisible}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={closeModal}
-        >
-          <TouchableOpacity style={styles.modalBackground} onPress={closeModal}>
-            <View style={styles.modalBackground} />
-          </TouchableOpacity>
 
-          <View style={styles.modalContent}>
-            <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
-              <Text style={styles.closeButtonText}>✕</Text>
-            </TouchableOpacity>
-            <Image source={selectedRecipe.image} style={styles.modalRecipeImage} />
-            <Text style={styles.modalRecipeName}>{selectedRecipe.name}</Text>
-            <Text style={styles.Mtitle}>Tempo de Preparação: {selectedRecipe.preparation_time} minutos {'\n'}</Text>
-            <Text style={[styles.biggerLtext, { marginBottom: 10 }]}>{selectedRecipe.description}</Text>
+      
+{selectedRecipe && (
+  <Modal
+    visible={modalVisible}
+    transparent={true}
+    animationType="slide"
+    onRequestClose={closeModal}
+  >
+    <TouchableOpacity style={styles.modalBackground} onPress={closeModal}>
+      <View style={styles.modalBackground} />
+    </TouchableOpacity>
 
-            <View style={styles.ingredientsContainer}>
-              <View style={styles.ingredientsColumn}>
-                <Text style={styles.Mtitle}>Ingredientes:</Text>
-                {selectedRecipe.ingredients.map((ingredient, index) => (
-                  <Text key={index} style={styles.bbiggerStext}>
-                    - {ingredient.name} ({ingredient.quantity === 'Null' ? '' : `${ingredient.quantity} gramas`}{' '}
-                    {ingredient.unit === 'Null' ? '' : `${ingredient.unit} unidades`})
-                  </Text>
-                ))}
-              </View>
-              <View style={styles.nutritionalColumn}>
-                <Text style={styles.Mtitle}>Valores Nutricionais:</Text>
-                <Text style={styles.bbiggerStext}>Calorias: {selectedRecipe.calories} kcal</Text>
-                <Text style={styles.bbiggerStext}>Proteínas: {selectedRecipe.protein} g</Text>
-                <Text style={styles.bbiggerStext}>Carboidratos: {selectedRecipe.carbs} g</Text>
-                <Text style={styles.bbiggerStext}>Gorduras: {selectedRecipe.fats} g</Text>
-              </View>
-            </View>
-          </View>
-        </Modal>
-      )}
+    <View style={styles.modalContent}>
+      <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
+        <Text style={styles.closeButtonText}>✕</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.checkbutton} onPress={() => fridgeUpdate(selectedRecipe.ingredients)}>
+        <FontAwesome5 name="check" size={24} color="#4dff4d" />
+      </TouchableOpacity>
+      <Text style={styles.checkButtonText}>Receita{"\n"}acabada</Text>
+
+      <Image source={selectedRecipe.image} style={styles.modalRecipeImage} />
+      <Text style={styles.modalRecipeName}>{selectedRecipe.name}</Text>
+      <Text style={styles.Mtitle}>
+        Tempo de Preparação: {selectedRecipe.preparation_time} minutos {'\n'}
+      </Text>
+      <Text style={[styles.biggerLtext, { marginBottom: 10 }]}>
+        {selectedRecipe.description}
+      </Text>
+
+      <View style={styles.ingredientsContainer}>
+        <View style={styles.ingredientsColumn}>
+          <Text style={styles.Mtitle}>Ingredientes:</Text>
+          {selectedRecipe.ingredients.map((ingredient, index) => (
+            <Text key={index} style={styles.bbiggerStext}>
+              - {ingredient.name} (
+              {ingredient.quantity === 'Null' ? '' : `${ingredient.quantity} gramas`}{' '}
+              {ingredient.unit === 'Null' ? '' : `${ingredient.unit} unidades`})
+            </Text>
+          ))}
+        </View>
+        <View style={styles.nutritionalColumn}>
+          <Text style={styles.Mtitle}>Valores Nutricionais:</Text>
+          <Text style={styles.bbiggerStext}>Calorias: {selectedRecipe.calories} kcal</Text>
+          <Text style={styles.bbiggerStext}>Proteínas: {selectedRecipe.protein} g</Text>
+          <Text style={styles.bbiggerStext}>Carboidratos: {selectedRecipe.carbs} g</Text>
+          <Text style={styles.bbiggerStext}>Gorduras: {selectedRecipe.fats} g</Text>
+        </View>
+      </View>
+    </View>
+  </Modal>
+)}
+
     </View>
   );
 };
 
-// Componente Custom para checkbox
-const Custom = ({ label, isChecked, onCheck }) => (
-  <TouchableOpacity style={styles.checkboxContainer} onPress={onCheck}>
-    <View style={styles.outerCircle}>
-      <View style={styles.innerCircle}>
-        {isChecked && <View style={styles.filledCircle} />}
-      </View>
-    </View>
-    <Text style={styles.label}>{label}</Text>
-  </TouchableOpacity>
-);
+
 
 const styles = StyleSheet.create({
   container: {
@@ -228,6 +343,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 5,
   },
+
   subHeader: {
     flexDirection: 'row',
     width: '100%',
@@ -254,7 +370,7 @@ const styles = StyleSheet.create({
   },
   checkboxContainer: {
     flexDirection: 'row',
-    marginLeft: 150,
+    marginLeft: 'auto',
     marginTop: 6,
   },
   outerCircle: {
@@ -276,9 +392,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   filledCircle: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     backgroundColor: '#009900',
   },
   label: {
@@ -334,6 +450,28 @@ const styles = StyleSheet.create({
     padding: 10,
     zIndex: 3,
   },
+  checkbutton:{
+    position: 'absolute',
+    top: 40,
+    right: 5,
+    padding: 10,
+    zIndex: 3,
+    borderRadius: 5,
+    marginLeft:20,
+    marginTop:10,
+
+  },
+  checkButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4dff4d',
+    textAlign: 'center',
+    marginTop: 45, // Ajusta a margem superior conforme necessário
+    position: 'absolute',
+    top: 40,
+    right: 5,
+  },
+  
   closeButtonText: {
     color: '#000',
     fontWeight: 'bold',
@@ -371,6 +509,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '500',
     marginLeft: 14,
+  },
+  button: {
+    backgroundColor: '#D0F4FF',
+    borderRadius: 10,
+    marginTop: 10,
+    marginBottom: 10,
   },
   noRecipesContainer: {
     justifyContent: 'center',

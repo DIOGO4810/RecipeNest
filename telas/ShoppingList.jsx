@@ -6,6 +6,7 @@ import { useSearch } from '../Contexts/SearchContext';
 import { getDb } from '../baseDeDados/database';
 import ingredientImages from '../imageMapping';
 import { Feather,FontAwesome5,Ionicons } from '@expo/vector-icons';
+import { removerAcentos } from '../baseDeDados/dataUtils';
 
 const ShoppingList = () => {
   const [ingredientName, setIngredientName] = useState('');
@@ -72,7 +73,7 @@ const ShoppingList = () => {
     db.transaction(tx => {
       tx.executeSql(
         'INSERT INTO buylist (name, quantity, unit) VALUES (?, ?, ?)',
-        [ingredientName.trim(), quantity, unit === null ? null : unit],
+        [removerAcentos(ingredientName.trim()), quantity, unit === null ? null : unit],
         () => {
           loadIngredients();
           setIngredientName('');
@@ -122,8 +123,13 @@ const ShoppingList = () => {
             // Ingredient already exists, so update the quantity or unit
             const existingIngredient = rows.item(0);
             
+            if( quantity === null && existingIngredient.quantity !== null || unit !== null && existingIngredient.quantity !== null ){
+            Alert.alert('Erro de medida','Este ingrediente está a ser medido em quantidade no seu frigorífico');
+            }else if (unit === null && existingIngredient.unit !== null || quantity !== null && existingIngredient.unit !== null ){
+              Alert.alert('Erro de medida','Este ingrediente está a ser medido em unidades no seu frigorífico');
+            }else{
             // Determine the new quantity and unit
-            const newQuantity = quantity !== null ? (existingIngredient.quantity !== null ? Number(existingIngredient.quantity) + Number(quantity) : quantity) : existingIngredient.quantity;
+            const newQuantity = quantity !== null ? (existingIngredient.quantity !== null ? Number(existingIngredient.quantity) + Number(quantity) : quantity) : existingIngredient.quantity ;
             const newUnit = unit !== null ? (existingIngredient.unit !== null ? Number(existingIngredient.unit) + Number(unit) : unit) : existingIngredient.unit;
   
             // Update the existing ingredient
@@ -150,7 +156,11 @@ const ShoppingList = () => {
                 console.error('Erro ao atualizar ingrediente na tabela de disponíveis:', error);
               }
             );
-          } else {
+          } 
+            }
+            
+
+          else {
             console.log('2');
 
             // Ingredient does not exist, insert it into the 'ingredients' table
