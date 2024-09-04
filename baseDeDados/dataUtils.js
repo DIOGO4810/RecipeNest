@@ -114,16 +114,23 @@ export const checkIngredientsAvailability = async (recipeId) => {
                     const recipeUnit = recipeIngredient.unit === "Null" ? null : recipeIngredient.unit;
                     const availableUnit = availableIngredient.unit === "Null" ? null : availableIngredient.unit;
 
-                   // console.log(`Nome: ${recipeId}`);
-                   // console.log(`Comparando ingrediente: ${recipeIngredient.name}`);
-                   // console.log(`Quantidade necessária: ${recipeQuantity}, Quantidade disponível: ${availableQuantity}`);
-                   // console.log(`Unidade necessária: ${recipeUnit}, Unidade disponível: ${availableUnit}`);
+                    console.log(`Nome: ${recipeId}`);
+                    console.log(`Comparando ingrediente: ${recipeIngredient.name}`);
+                    console.log(`Quantidade necessária: ${recipeQuantity}, Quantidade disponível: ${availableQuantity}`);
+                   console.log(`Unidade necessária: ${recipeUnit}, Unidade disponível: ${availableUnit}`);
 
-                    const quantityCheck = recipeQuantity === null || isNaN(recipeQuantity) || Number(availableQuantity) >= Number(recipeQuantity);
-                    const unitCheck = (recipeUnit === null) || (availableUnit !== null && Number(availableUnit) >= Number(recipeUnit));
-                    console.log(quantityCheck,unitCheck);
+                  //  const quantityCheck = recipeQuantity === null || isNaN(recipeQuantity) || Number(availableQuantity) >= Number(recipeQuantity);
+                    //const unitCheck = (recipeUnit === null) || (availableUnit !== null && Number(availableUnit) >= Number(recipeUnit));
+                    //console.log(quantityCheck,unitCheck);
                     
-                    return quantityCheck && unitCheck;
+                    console.log();
+                       const check = (availableQuantity===null || isNaN(availableQuantity))
+                       ? (Number(availableUnit) >= Number(recipeUnit))
+                       : (Number(availableQuantity) >= Number(recipeQuantity));
+                       console.log("check: ");
+                       console.log(check);
+                       return check;
+                   
                   }
 
                   return false;
@@ -223,9 +230,9 @@ export const addInitialRecipes = () => {
         image: require('../assets/images/Recypes/spagheti.jpg'),
         category: 'refeicao',
         ingredients: JSON.stringify([
-            { "name": "eggs", "quantity": "Null", "unit": 3 },
-            { "name": "flour", "quantity": "100", "unit": "Null" },
-            { "name": "pao", "quantity": "Null", "unit": "5" }
+            { "name": "eggs", "quantity": "180", "unit": 3 },
+            { "name": "flour", "quantity": "100", "unit": 1 },
+            { "name": "pao", "quantity": 1000, "unit": "5" }
         ]),
         calories: 250,
         protein: 15,
@@ -240,9 +247,9 @@ export const addInitialRecipes = () => {
         image: require('../assets/images/Recypes/bolo.jpg'),
         category: 'sobremesa',
         ingredients: JSON.stringify([
-            { "name": "eggs", "quantity": "Null", "unit": 3 },
-            { "name": "flour", "quantity": "100", "unit": "Null" },
-            { "name": "leite", "quantity": "300", "unit": "Null" }
+            { "name": "eggs", "quantity": "180", "unit": 3 },
+            { "name": "flour", "quantity": "100", "unit": 1 },
+            { "name": "leite", "quantity": "300", "unit": 2 }
         ]),
         calories: 300,
         protein: 5,

@@ -33,7 +33,7 @@ export default function App() {
 
   return (
     <FocusProvider>
-      <SearchProvider>
+    <SearchProvider>
     <VeganProvider>
      <NavigationContainer>
 

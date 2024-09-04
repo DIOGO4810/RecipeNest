@@ -6,6 +6,7 @@ import { getDb } from '../baseDeDados/database';
 import ingredientImages from '../imageMapping';
 import { Ionicons } from '@expo/vector-icons';
 
+
 const AvailableIngredientsScreen = ({navigation}) => {
   const [ingredientName, setIngredientName] = useState('');
   const [quantity, setQuantity] = useState(null);
@@ -44,7 +45,8 @@ const AvailableIngredientsScreen = ({navigation}) => {
       );
     });
   };
-
+  
+ 
   const addIngredient = () => {
     if (!ingredientName.trim()) {
       Alert.alert('Erro', 'Por favor, insira o nome do ingrediente.');
