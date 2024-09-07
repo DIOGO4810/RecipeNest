@@ -129,7 +129,7 @@ const EveryRecipe = () => {
       <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
         <Text style={styles.closeButtonText}>✕</Text>
       </TouchableOpacity>
-      <Image source={selectedRecipe.image} style={styles.modalRecipeImage} />
+      {/*<Image source={selectedRecipe.image} style={styles.modalRecipeImage} />*/}
 
       <Text style={styles.modalRecipeName}>{selectedRecipe.name}</Text>
 
@@ -261,9 +261,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   modalRecipeName: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     marginVertical: 10,
+    alignSelf:'flex-start'
   },
   biggerLtext: {
     fontSize: 18,

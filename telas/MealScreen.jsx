@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, Modal,Dimensions} from 'react-native';
+import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, Modal,Dimensions,ScrollView} from 'react-native';
 import { checkIngredientsAvailability } from '../baseDeDados/dataUtils';
 import { getDb } from '../baseDeDados/database';
 import { useFocusEffect,useNavigation } from '@react-navigation/native';
@@ -7,13 +7,22 @@ import { Feather, MaterialCommunityIcons,FontAwesome5 } from '@expo/vector-icons
 import { useVegan } from '../Contexts/VeganContext';
 import { useSearch } from '../Contexts/SearchContext';
 import { useFocus } from '../Contexts/FocusContext';
+import Toast from 'react-native-toast-message';
+
 
 
 export function capitalizeFirstLetter(string) {
   if (!string) return ''; // Verifica se a string é vazia ou undefined
 
   return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
-} 
+}    
+
+// Dimensões da tela
+    const { width, height } = Dimensions.get('window');
+    const fontnormalModaWidth = width * 0.045;
+    const fontnormalModalHeigth = height * 0.3;
+    const fontTitleModal = width * 0.045;
+
 
 const MealScreen = () => {
   // Estados
@@ -30,8 +39,7 @@ const MealScreen = () => {
   const { focus,setfocus } = useFocus();
   const { searchQuery } = useSearch();
 
-    // Dimensões da tela
-    const { width, height } = Dimensions.get('window');
+  console.log(width,height);
 
   // Função para buscar receitas
   const fetchRecipes = async () => {
@@ -192,47 +200,96 @@ const Custom = ({ label, isChecked, onCheck }) => (
 
 
 
+const fridgeCheck = async (ingredients) => {
+  const db = getDb();
+
+  const promises = ingredients.map((ingredient) => {
+    const { name, quantity, unit } = ingredient;
+
+    return new Promise((resolve, reject) => {
+      db.transaction((tx) => {
+        tx.executeSql(
+          'SELECT * FROM ingredients WHERE name = ?',
+          [capitalizeFirstLetter(name)],
+          (_, { rows }) => {
+            if (rows.length > 0) {
+              const existingIngredient = rows.item(0);
+               // Inicializa as variáveis fora dos blocos if-else
+            let newQuantity = existingIngredient.quantity;
+            let newUnit = existingIngredient.unit;
+
+               // Atualiza as variáveis conforme a lógica de negócios
+               if (existingIngredient.quantity !== null) {
+                newQuantity = existingIngredient.quantity - quantity;
+              }
+              if (existingIngredient.unit !== null) {
+                newUnit = existingIngredient.unit - unit;
+              }
+              console.log(newQuantity,newUnit);
+              if ((newQuantity >= 0 || existingIngredient.quantity === null) &&
+                  (newUnit >= 0 || existingIngredient.unit === null)) {
+                resolve(true);
+              } else {
+                resolve(false);
+              }
+            } else {
+              resolve(false);
+            }
+          },
+          (_, error) => {
+            console.log('Erro ao verificar o ingrediente:', error);
+            reject(error);
+          }
+        );
+      });
+    });
+  });
+
+  // Espera todas as promessas serem resolvidas e verifica se todos os ingredientes estão disponíveis
+  const results = await Promise.all(promises);
+  return results.every((isAvailable) => isAvailable);
+};
+
+
+
+
 const fridgeUpdate = (ingredients) => {
   const db = getDb();
 
-
   ingredients.forEach((ingredient) => {
-    console.log(ingredient);
-  });
+    const { name, quantity, unit } = ingredient;
 
-
-  ingredients.forEach((ingredient) => {
-    const { name, quantity,unit } = ingredient;
-
-    // Verifica se o ingrediente existe na tabela
     db.transaction((tx) => {
       tx.executeSql(
         'SELECT * FROM ingredients WHERE name = ?',
         [capitalizeFirstLetter(name)],
-        
         (_, { rows }) => {
-          console.log(name);
           if (rows.length > 0) {
             const existingIngredient = rows.item(0);
-            const newQuantity = existingIngredient.quantity - quantity;
-            const newUnit = existingIngredient.unit - unit;
-            console.log(newQuantity,newUnit);
-            if (newQuantity >= 0 && newUnit >= 0 ||newQuantity >= 0 || newUnit >= 0  ) {
-              console.log("NETER");
-              // Atualiza a quantidade do ingrediente na tabela
-              tx.executeSql(
-                'UPDATE ingredients SET quantity = ?, unit = ? WHERE name = ?',
-                [newQuantity,newUnit, capitalizeFirstLetter(name)],
-                (_, resultSet) => {
-                  console.log(`Ingrediente ${name} atualizado para ${newQuantity} e ${newUnit}.`);
-                  setWasClicked(true);
-                },
-                (_, error) => {
-                  console.log(`Erro ao atualizar ingrediente ${name}:`, error);
-                }
-              );
-            }else{setModalVisible(false)}
-          } 
+
+            // Inicializa as variáveis fora dos blocos if-else
+            let newQuantity = existingIngredient.quantity;
+            let newUnit = existingIngredient.unit;
+
+               // Atualiza as variáveis conforme a lógica de negócios
+               if (existingIngredient.quantity !== null) {
+                newQuantity = existingIngredient.quantity - quantity;
+              }
+              if (existingIngredient.unit !== null) {
+                newUnit = existingIngredient.unit - unit;
+              }
+            tx.executeSql(
+              'UPDATE ingredients SET quantity = ?, unit = ? WHERE name = ?',
+              [newQuantity, newUnit, capitalizeFirstLetter(name)],
+              (_, resultSet) => {
+                console.log(`Ingrediente ${name} atualizado para ${newQuantity} e ${newUnit}.`);
+                setWasClicked(true);
+              },
+              (_, error) => {
+                console.log(`Erro ao atualizar ingrediente ${name}:`, error);
+              }
+            );
+          }
         },
         (_, error) => {
           console.log('Erro ao verificar o ingrediente:', error);
@@ -240,6 +297,38 @@ const fridgeUpdate = (ingredients) => {
       );
     });
   });
+};
+
+
+
+
+
+const handleCheckAndUpdate = async () => {
+  const allIngredientsAvailable = await fridgeCheck(selectedRecipe.ingredients);
+  if (allIngredientsAvailable) {
+    fridgeUpdate(selectedRecipe.ingredients);
+    Toast.show({
+      type: 'success',
+      position: 'top',
+      text1: 'Receita finalizada',
+      text2: 'Retiramos os ingredientes do firgorifico.',
+      visibilityTime: 2000,
+      autoHide: true,
+      topOffset: 70,
+      textStyle:'bold',
+      swipeEnabled: true,
+      text1Style: {
+        color: 'black', // Cor do texto principal
+        fontSize: 16, // Tamanho da fonte do texto principal
+      },
+      text2Style: {
+        color: 'black', // Cor do texto secundário
+        fontSize: 14, // Tamanho da fonte do texto secundário
+      },
+
+    });
+    setSelectedRecipe(false); // Feche a receita selecionada
+  } 
 };
 
 
@@ -270,76 +359,77 @@ const fridgeUpdate = (ingredients) => {
       )}
 
 
-      {selectedRecipe && (
-        <Modal
-          visible={modalVisible}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={closeModal}
-        >
-          <TouchableOpacity style={styles.modalBackground} onPress={closeModal}>
-            <View style={styles.modalBackground} />
-          </TouchableOpacity>
+{selectedRecipe && (
+  <Modal
+    visible={modalVisible}
+    transparent={true}
+    animationType="slide"
+    onRequestClose={closeModal}
+  >
+    <TouchableOpacity style={styles.modalBackground} onPress={closeModal}>
+      <View style={styles.modalBackground} />
+    </TouchableOpacity>
 
-          <View style={styles.modalContent}>
-            <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
-              <Text style={styles.closeButtonText}>✕</Text>
-            </TouchableOpacity>
-               <TouchableOpacity style={styles.checkbutton} onPress={() => fridgeUpdate(selectedRecipe.ingredients)}>
-        <FontAwesome5 name="check" size={24} color="#4dff4d" />
-      </TouchableOpacity>
-      
-      <Text style={styles.checkButtonText}>Receita{"\n"}acabada</Text>
-            <Image source={selectedRecipe.image} style={styles.modalRecipeImage} />
-            <Text style={styles.modalRecipeName}>{selectedRecipe.name}</Text>
-            <Text style={styles.Mtitle}>Tempo de Preparação: {selectedRecipe.preparation_time} minutos {'\n'}</Text>
-            <Text style={[styles.biggerLtext, { marginBottom: 10 }]}>{selectedRecipe.description}</Text>
+    <View style={styles.modalContent}>
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
+          <Text style={styles.closeButtonText}>✕</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.checkbutton} onPress={handleCheckAndUpdate}>
+          <FontAwesome5 name="check" size={24} color="#4dff4d" />
+        </TouchableOpacity>
 
-         
-              <View style={styles.ingredientsColumn}>
-                <Text style={styles.Mtitle}>Ingredientes:</Text>
-                {selectedRecipe.ingredients.map((ingredient, index) => (
-                  <View  key={index} style={{flexDirection:'row'}}>
-                  <Text style={styles.bbiggerStextT}>
-                    {'> '} {ingredient.name}{'\t'} </Text>
-                   <Text  style={styles.bbiggerStext}>- {`${ingredient.quantity} gramas ou ${ingredient.unit} unidades`}
-                  </Text>
-                  </View>
-                ))}
+        <Text style={styles.checkButtonText}>Acabado</Text>
+        {/* <Image source={selectedRecipe.image} style={styles.modalRecipeImage} /> */}
+        <Text style={styles.modalRecipeName}>{selectedRecipe.name}</Text>
+        <Text style={styles.Mtitle}>Tempo de Preparação: {selectedRecipe.preparation_time} minutos</Text>
+        <Text style={[styles.modalRecipeDesc, { marginBottom: 10 }]}>{selectedRecipe.description}</Text>
+
+        <View style={styles.ingredientsColumn}>
+          <Text style={styles.Mtitle}>Ingredientes:</Text>
+          {selectedRecipe.ingredients.map((ingredient, index) => (
+            <View key={index} style={{ flexDirection: 'row' }}>
+              <Text style={styles.bbiggerStextT}>
+                {'> '} {ingredient.name}{'\t'}
+              </Text>
+              <Text style={styles.bbiggerStext}>
+                - {`${ingredient.quantity} gramas ou ${ingredient.unit} unidades`}
+              </Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.nutritionalColumn}>
+          <Text style={styles.Mtitle}>Valores Nutricionais:</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row' }}>
+                <Text style={styles.bbiggerStextT}>Calorias: {'\t'}</Text>
+                <Text style={styles.bbiggerStext}>{selectedRecipe.calories} kcal</Text>
               </View>
-          <View style={styles.nutritionalColumn}>
-            <Text style={styles.Mtitle}>Valores Nutricionais:</Text>
-            <View style={{flexDirection: 'row', justifyContent: 'space-between', width: '100%'}}>
-              <View style={{flex: 1}}>
-                <View style={{flexDirection: 'row'}}>
-                  <Text style={styles.bbiggerStextT}>Calorias:  {'\t'}</Text>
-                  <Text style={styles.bbiggerStext}>{selectedRecipe.calories} kcal</Text>
-                </View> 
-
-                <View style={{flexDirection: 'row'}}>
-                 <Text style={styles.bbiggerStextT}>Carboidratos:  {'\t'}</Text>
+              <View style={{ flexDirection: 'row' }}>
+                <Text style={styles.bbiggerStextT}>Carboidratos: {'\t'}</Text>
                 <Text style={styles.bbiggerStext}>{selectedRecipe.carbs} g</Text>
-               </View> 
               </View>
-    
-
-               <View style={{flex: 1}}>
-                 <View style={{flexDirection: 'row'}}>
-                  <Text style={styles.bbiggerStextT}>Proteínas:  {'\t'}</Text>
-                 <Text style={styles.bbiggerStext}>{selectedRecipe.protein} g</Text>
-                 </View>     
-
-                <View style={{flexDirection: 'row'}}>
-                 <Text style={styles.bbiggerStextT}>Gorduras:  {'\t'}</Text>
-                 <Text style={styles.bbiggerStext}>{selectedRecipe.fats} g</Text>
-                  </View> 
-               </View>
+            </View>
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row' }}>
+                <Text style={styles.bbiggerStextT}>Proteínas: {'\t'}</Text>
+                <Text style={styles.bbiggerStext}>{selectedRecipe.protein} g</Text>
+              </View>
+              <View style={{ flexDirection: 'row' }}>
+                <Text style={styles.bbiggerStextT}>Gorduras: {'\t'}</Text>
+                <Text style={styles.bbiggerStext}>{selectedRecipe.fats} g</Text>
+              </View>
             </View>
           </View>
-  </View>
-      
-        </Modal>
-      )}
+        </View>
+      </ScrollView>
+    </View>
+  </Modal>
+)}
+
     </View>
   );
 };
@@ -463,6 +553,12 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     zIndex: 2,
+    flex: 1, // Garante que o container do modal ocupe todo o espaço disponível
+    justifyContent: 'flex-end', // Garante que o modal fique na parte inferior
+  },
+  scrollViewContent:{
+    flexGrow: 1, // Garante que o ScrollView ocupe todo o espaço disponível
+
   },
   closeButton: {
     position: 'absolute',
@@ -505,9 +601,17 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   modalRecipeName: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
+    marginTop:10,
     marginVertical: 10,
+    alignSelf:'flex-start'
+  },
+  modalRecipeDesc:{
+    fontSize: fontnormalModaWidth,
+    alignSelf: 'flex-start',
+ 
+
   },
   biggerLtext: {
     fontSize: 18,
@@ -527,7 +631,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   Mtitle: {
-    fontSize: 18,
+    fontSize: fontTitleModal,
     fontWeight: 'bold',
     alignSelf: 'flex-start',
     paddingBottom:5,
