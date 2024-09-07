@@ -7,6 +7,7 @@ import { Feather,MaterialCommunityIcons,FontAwesome5 } from '@expo/vector-icons'
 import { useFocus } from '../Contexts/FocusContext';
 import { useVegan } from '../Contexts/VeganContext';
 import { useSearch } from '../Contexts/SearchContext';
+import Toast from 'react-native-toast-message';
 
 const BakeryScreen = () => {
   const [recipes, setRecipes] = useState([]);
@@ -19,6 +20,9 @@ const BakeryScreen = () => {
   const { searchQuery } = useSearch();
   const {isVeganChecked,setIsVeganChecked} = useVegan();
   const navigation = useNavigation();
+
+
+
 
   const fetchRecipes = async () => {
     try {
@@ -188,47 +192,96 @@ const BakeryScreen = () => {
   );
 
 
-  const fridgeUpdate = (ingredients) => {
+  const fridgeCheck = async (ingredients) => {
     const db = getDb();
-
   
-    ingredients.forEach((ingredient) => {
-      console.log(ingredient);
+    const promises = ingredients.map((ingredient) => {
+      const { name, quantity, unit } = ingredient;
+  
+      return new Promise((resolve, reject) => {
+        db.transaction((tx) => {
+          tx.executeSql(
+            'SELECT * FROM ingredients WHERE name = ?',
+            [capitalizeFirstLetter(name)],
+            (_, { rows }) => {
+              if (rows.length > 0) {
+                const existingIngredient = rows.item(0);
+                 // Inicializa as variáveis fora dos blocos if-else
+              let newQuantity = existingIngredient.quantity;
+              let newUnit = existingIngredient.unit;
+
+                 // Atualiza as variáveis conforme a lógica de negócios
+                 if (existingIngredient.quantity !== null) {
+                  newQuantity = existingIngredient.quantity - quantity;
+                }
+                if (existingIngredient.unit !== null) {
+                  newUnit = existingIngredient.unit - unit;
+                }
+                console.log(newQuantity,newUnit);
+                if ((newQuantity >= 0 || existingIngredient.quantity === null) &&
+                    (newUnit >= 0 || existingIngredient.unit === null)) {
+                  resolve(true);
+                } else {
+                  resolve(false);
+                }
+              } else {
+                resolve(false);
+              }
+            },
+            (_, error) => {
+              console.log('Erro ao verificar o ingrediente:', error);
+              reject(error);
+            }
+          );
+        });
+      });
     });
   
+    // Espera todas as promessas serem resolvidas e verifica se todos os ingredientes estão disponíveis
+    const results = await Promise.all(promises);
+    return results.every((isAvailable) => isAvailable);
+  };
+  
+  
+
+  
+  const fridgeUpdate = (ingredients) => {
+    const db = getDb();
   
     ingredients.forEach((ingredient) => {
-      const { name, quantity,unit } = ingredient;
+      const { name, quantity, unit } = ingredient;
   
-      // Verifica se o ingrediente existe na tabela
       db.transaction((tx) => {
         tx.executeSql(
           'SELECT * FROM ingredients WHERE name = ?',
           [capitalizeFirstLetter(name)],
-          
           (_, { rows }) => {
-            console.log(name);
             if (rows.length > 0) {
               const existingIngredient = rows.item(0);
-              const newQuantity = existingIngredient.quantity - quantity;
-              const newUnit = existingIngredient.unit - unit;
-              console.log(newQuantity,newUnit);
-              if (newQuantity >= 0 && newUnit >= 0 ||newQuantity >= 0 || newUnit >= 0  ) {
-                console.log("NETER");
-                // Atualiza a quantidade do ingrediente na tabela
-                tx.executeSql(
-                  'UPDATE ingredients SET quantity = ?, unit = ? WHERE name = ?',
-                  [newQuantity,newUnit, capitalizeFirstLetter(name)],
-                  (_, resultSet) => {
-                    console.log(`Ingrediente ${name} atualizado para ${newQuantity} e ${newUnit}.`);
-                    setWasClicked(true);
-                  },
-                  (_, error) => {
-                    console.log(`Erro ao atualizar ingrediente ${name}:`, error);
-                  }
-                );
-              }else{setModalVisible(false)}
-            } 
+
+              // Inicializa as variáveis fora dos blocos if-else
+              let newQuantity = existingIngredient.quantity;
+              let newUnit = existingIngredient.unit;
+
+                 // Atualiza as variáveis conforme a lógica de negócios
+                 if (existingIngredient.quantity !== null) {
+                  newQuantity = existingIngredient.quantity - quantity;
+                }
+                if (existingIngredient.unit !== null) {
+                  newUnit = existingIngredient.unit - unit;
+                }
+              tx.executeSql(
+                'UPDATE ingredients SET quantity = ?, unit = ? WHERE name = ?',
+                [newQuantity, newUnit, capitalizeFirstLetter(name)],
+                (_, resultSet) => {
+                  console.log(`Ingrediente ${name} atualizado para ${newQuantity} e ${newUnit}.`);
+                  setWasClicked(true);
+                },
+                (_, error) => {
+                  console.log(`Erro ao atualizar ingrediente ${name}:`, error);
+                }
+              );
+            }
           },
           (_, error) => {
             console.log('Erro ao verificar o ingrediente:', error);
@@ -237,8 +290,41 @@ const BakeryScreen = () => {
       });
     });
   };
+  
 
 
+
+
+  const handleCheckAndUpdate = async () => {
+    const allIngredientsAvailable = await fridgeCheck(selectedRecipe.ingredients);
+    if (allIngredientsAvailable) {
+      fridgeUpdate(selectedRecipe.ingredients);
+      Toast.show({
+        type: 'success',
+        position: 'top',
+        text1: 'Receita finalizada',
+        text2: 'Retiramos os ingredientes do frigorifico.',
+        visibilityTime: 2000,
+        autoHide: true,
+        topOffset: 70,
+        textStyle:'bold',
+        swipeEnabled: true,
+        text1Style: {
+          color: 'black', // Cor do texto principal
+          fontSize: 16, // Tamanho da fonte do texto principal
+        },
+        text2Style: {
+          color: 'black', // Cor do texto secundário
+          fontSize: 14, // Tamanho da fonte do texto secundário
+        },
+
+      });
+      setSelectedRecipe(false); // Feche a receita selecionada
+    } 
+  };
+  
+  
+  
 
 
 
@@ -265,7 +351,7 @@ const BakeryScreen = () => {
           contentContainerStyle={styles.flatListContent}
         />
       )}
-
+      
       {selectedRecipe && (
         <Modal
           visible={modalVisible}
@@ -282,11 +368,11 @@ const BakeryScreen = () => {
             <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
               <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
-
-      <TouchableOpacity style={styles.checkbutton} onPress={() => fridgeUpdate(selectedRecipe.ingredients)}>
+          
+      <TouchableOpacity style={styles.checkbutton} onPress={handleCheckAndUpdate}>
         <FontAwesome5 name="check" size={24} color="#4dff4d" />
       </TouchableOpacity>
-      <Text style={styles.checkButtonText}>Receita{"\n"}acabada</Text>
+      <Text style={styles.checkButtonText}>Receita{"\n"}acabada  </Text>
 
             <Image source={selectedRecipe.image} style={styles.modalRecipeImage} />
 
@@ -341,6 +427,9 @@ const BakeryScreen = () => {
       </View>
         </Modal>
       )}
+
+
+
     </View>
   );
 };

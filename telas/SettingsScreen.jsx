@@ -40,8 +40,23 @@ const SettingsScreen = () => {
               style={styles.link}
               onPress={() => Linking.openURL('https://www.flaticon.com/')}
             >
-              www.flaticon.com
+              www.flaticon.com{'\n'}
             </Text>
+            Images made by KamranAydinov no {' '}
+            <Text
+              style={styles.link}
+              onPress={() => Linking.openURL('https://www.flaticon.com/authors/photo3idea-studio')}
+            >
+              Freepik
+            </Text>{' '}
+            from{' '}
+            <Text
+              style={styles.link}
+              onPress={() => Linking.openURL('https://www.flaticon.com/')}
+            >
+              www.freepik.com
+            </Text>
+
           </Text>
         </View>
       </ScrollView>

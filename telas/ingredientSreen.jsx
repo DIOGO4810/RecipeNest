@@ -89,7 +89,7 @@ const AvailableIngredientsScreen = ({ navigation }) => {
     db.transaction(tx => {
       tx.executeSql(
         'INSERT INTO ingredients (name, quantity, unit, image) VALUES (?, ?, ?, ?)',
-        [removerAcentos(ingredientName.trim()), quantity ? parseFloat(quantity) : null, unit ? parseFloat(unit) : null, imageName],
+        [(ingredientName.trim()), quantity ? parseFloat(quantity) : null, unit ? parseFloat(unit) : null, imageName],
         () => {
           loadIngredients();
           setIngredientName('');
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 5,
     borderRadius: 5,
-    marginLeft: 30,
+
   },
   button: {
     backgroundColor: '#BED6FE',

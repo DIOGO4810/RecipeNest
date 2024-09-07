@@ -5,7 +5,7 @@ const db = SQLite.openDatabase('app.db');
 export const initializeDatabase = () => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
-      //tx.executeSql('DROP TABLE IF EXISTS recipes');
+      tx.executeSql('DROP TABLE IF EXISTS recipes');
       
 
       // Cria a tabela de ingredientes
