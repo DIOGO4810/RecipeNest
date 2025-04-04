@@ -1,6 +1,8 @@
 # RecipeNest - App de Receitas
 
-**RecipeNest** é um aplicativo de receitas desenvolvido com **React Native** e **Expo**, projetado para ajudar os usuários a encontrar, salvar e organizar receitas de forma simples e intuitiva. O app utiliza o `expo-sqlite` para armazenar dados localmente.
+**RecipeNest** é um aplicativo de receitas desenvolvido com **React Native** e **Expo** por [Diogo Ribeiro](https://github.com/DIOGO4810) e
+[Carolina Martins](https://github.com/Carolllina)
+ projetado para ajudar os usuários a encontrar, salvar e organizar receitas de forma simples e intuitiva. O app utiliza o `expo-sqlite` para armazenar dados localmente.
 
 
 ## Sobre o Projeto
