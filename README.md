@@ -38,9 +38,12 @@ npx expo start
 **(Ios)** - Scanear o QRcode
 
 
-## Preview da App
-- **Home page**
-![alt text](assets/homePreview.jpeg)
-- **Meal page**
-![alt text](assets/refeicoesPreview.jpeg)
+# Preview da App
+## Home page  
+
+<img src="assets/homePreview.jpeg" width="350" />
+
+## Meal page 
+
+<img src="assets/refeicoesPreview.jpeg" width="350" />
 
